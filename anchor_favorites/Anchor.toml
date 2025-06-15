@@ -5,11 +5,11 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-anchor_favorites = "HGq5ZAt1kDDHn4ZCK6tLcdnzbft5t7tFXZTvibNWYe6q"
+anchor_favorites = "4Sq6MsHjGc71x4cCXXnpxqVErDptwCmrdJjZexrrnCVK"
 
+# IDL 注册表（Registry）配置
 [registry]
 url = "https://api.apr.dev"
-
 
 [provider]
 cluster = "localnet"
