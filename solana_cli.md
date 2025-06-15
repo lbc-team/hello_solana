@@ -56,3 +56,4 @@ solana transfer --from <KEYPAIR> <RECIPIENT_ACCOUNT_ADDRESS> <AMOUNT> --fee-paye
 solana transfer --from ~/.config/solana/id.json 8gwAbvN8t7n7PoTqWhuqPJ7s4Vgov1YNPByMBJavgHJt 1 --fee-payer ~/.config/solana/id.json 
 --allow-unfunded-recipient
 ```
+
