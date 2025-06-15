@@ -38,7 +38,8 @@ anchor init <project name>
 > anchor test
 > anchor test --skip-local-validator  # 不启动 solana-test-validator
 > anchor test --skip-build   # 使用之前的构建
-> anchor test --skip-deploy  # 使用之前的部署
+> anchor test --skip-deploy  # 使用之前的部署 
+> anchor test --skip-local-validator --skip-deploy --skip-build
 ```
 
 运行 `Anchor.toml` 中定义在 `scripts` 下的 test 脚本。

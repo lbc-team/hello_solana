@@ -2,6 +2,7 @@ import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { Favorites } from "../target/types/favorites";
 import { BN } from "@coral-xyz/anchor";
+import { expect } from "chai";
 
 async function generateUserAndAirdropSol() {
 
@@ -57,5 +58,9 @@ describe("anchor_favorites", () => {
     console.log("Favorites account:", favoritesAccount);
     console.log("Number:", favoritesAccount.number.toString());
     console.log("Color:", favoritesAccount.color);
+
+    // 断言账户数据
+    expect(favoritesAccount.number.toString()).to.equal("42");
+    expect(favoritesAccount.color).to.equal("blue");
   });
 });
