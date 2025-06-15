@@ -11,17 +11,22 @@ async function generateUserAndAirdropSol() {
     
       // 给用户账户空投 SOL
       const connection = anchor.getProvider().connection;
+      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
       const airdropSignature = await connection.requestAirdrop(
         user.publicKey,
         2 * anchor.web3.LAMPORTS_PER_SOL // 空投 2 SOL
       );
-      await connection.confirmTransaction(airdropSignature);
+      await connection.confirmTransaction({
+        signature: airdropSignature,
+        blockhash,
+        lastValidBlockHeight,
+      });
 
       return user;
 }
 
 describe("anchor_favorites", () => {
-  // 读取 Anchor.toml 配置的 provider 
+  // 读取 Anchor.toml 配置的 cluster 与 wallet 作为 provider 
   anchor.setProvider(anchor.AnchorProvider.env());
   const program = anchor.workspace.Favorites as Program<Favorites>;
 
@@ -53,7 +58,8 @@ describe("anchor_favorites", () => {
       
     console.log("Your transaction signature", tx);
     
-    // 调用 account.fetch 获取账户数据
+    // 调用 program.account.specificAccountType.fetch 获取某个账户数据
+    // 如果获取所有账户数据，则使用 program.account.specificAccountType.all 方法
     const favoritesAccount = await program.account.favorites.fetch(favoritesPda);
     console.log("Favorites account:", favoritesAccount);
     console.log("Number:", favoritesAccount.number.toString());
