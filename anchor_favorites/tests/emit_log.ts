@@ -16,9 +16,17 @@ describe("emit_log", () => {
         // 获取并打印日志
         const txInfo = await anchor.getProvider().connection.getParsedTransaction(tx, "confirmed");
         if (txInfo && txInfo.meta && txInfo.meta.logMessages) {
-        console.log("Transaction logs:", txInfo.meta.logMessages);
+            console.log("Transaction logs:", txInfo.meta.logMessages);
+            for (const log of txInfo.meta.logMessages) {
+                const prefix = "Program data: ";
+                if (log.startsWith(prefix)) {
+                    const base64 = log.slice(prefix.length);
+                    const event = program.coder.events.decode(base64);
+                    if (event) {
+                        console.log("Anchor Event:", event);
+                    }
+                }
+            }
         }
-        // 也可以根据需要断言日志内容
-        // expect(txInfo.meta.logMessages.some(log => log.includes("will emit log"))).to.be.true;
     });
 }); 
