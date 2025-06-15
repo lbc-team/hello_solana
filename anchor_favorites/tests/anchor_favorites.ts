@@ -53,13 +53,13 @@ describe("anchor_favorites", () => {
       
     console.log("Your transaction signature", tx);
     
-    // 验证账户数据
+    // 调用 account.fetch 获取账户数据
     const favoritesAccount = await program.account.favorites.fetch(favoritesPda);
     console.log("Favorites account:", favoritesAccount);
     console.log("Number:", favoritesAccount.number.toString());
     console.log("Color:", favoritesAccount.color);
 
-    // 断言账户数据
+    // 断言验证账户数据
     expect(favoritesAccount.number.toString()).to.equal("42");
     expect(favoritesAccount.color).to.equal("blue");
   });

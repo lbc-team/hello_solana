@@ -34,6 +34,13 @@ anchor init <project name>
 
 ## 测试
 
+### 单元测试
+
+单元测试用例直接在源文件一起编写
+在 `programs/anchor_favorites` 运行 `cargo test`
+
+### 集成测试
+
 ```
 > anchor test
 > anchor test --skip-local-validator  # 不启动 solana-test-validator
