@@ -6,6 +6,7 @@
     "dev": "ts-node src/index.ts",
     "listen": "ts-node src/listen_favorites.ts",
     "transfer": "ts-node src/transfer.ts",
+    "measure-cu": "ts-node src/measure_cu.ts",
     "build": "tsc"
   },
   "dependencies": {
