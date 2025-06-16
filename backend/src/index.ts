@@ -33,17 +33,20 @@ async function main() {
   const program = new Program<Favorites>(idl as Favorites, provider);
 
   const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
-  // Airdrop 一些 SOL 以便支付手续费
-  const airdropSignature = await connection.requestAirdrop(
-    payer.publicKey,
-    LAMPORTS_PER_SOL,
-  );
-  await connection.confirmTransaction({
-    signature: airdropSignature,
-    blockhash,
-    lastValidBlockHeight,
-  });
-  console.log("Airdrop 完成");
+
+  if (await connection.getBalance(payer.publicKey) < 10 * LAMPORTS_PER_SOL) {
+    // Airdrop 一些 SOL 以便支付手续费
+    const airdropSignature = await connection.requestAirdrop(
+      payer.publicKey,
+      10 *LAMPORTS_PER_SOL,
+    );
+    await connection.confirmTransaction({
+      signature: airdropSignature,
+      blockhash,
+      lastValidBlockHeight,
+    });
+    console.log("Airdrop 完成");
+  }
 
   // 计算 PDA
   const [favoritesPda] = PublicKey.findProgramAddressSync(
