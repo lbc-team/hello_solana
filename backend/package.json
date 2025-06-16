@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "dist/index.js",
   "scripts": {
-    "start": "ts-node src/index.ts",
+    "dev": "ts-node src/index.ts",
+    "listen": "ts-node src/listen_favorites.ts",
     "build": "tsc"
   },
   "dependencies": {

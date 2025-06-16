@@ -7,7 +7,9 @@
 - 支持调用合约方法（如 set_favorites）、查询账户等
 
 ## 使用方法
-1. 安装依赖：`pnpm install`
-2. 运行脚本：`pnpm start`
+1. 安装依赖：`pnpm install` （node 版本为 v22）
+   
+2. 运行脚本：
+   * `pnpm dev` : 与Favorites 交互，获取相关账户数据
+   * `pnpm listen` : 监听程序的变化，若数据更新快，需要推入到消息队列
 
-请根据实际需求在 src/ 目录下编写交互逻辑。 

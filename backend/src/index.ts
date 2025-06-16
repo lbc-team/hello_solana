@@ -9,15 +9,17 @@ import {
 } from "@solana/web3.js";
 import { Program, BN, AnchorProvider, setProvider } from "@coral-xyz/anchor";
 import idl from "./idl/favorites.json";
-import { PROGRAM_ID, RPC_ENDPOINT } from "./config";
+import { PROGRAM_ID, RPC_ENDPOINT, PAYER_KEYPAIR_PATH } from "./config";
 import { Favorites } from "./types/favorites";
+import fs from "fs";
 
 async function main() {
   // 连接本地节点
   const connection = new Connection(RPC_ENDPOINT, "confirmed");
 
   // 生成钱包
-  const payer = Keypair.generate();
+  // const payer = Keypair.generate();
+  const payer = Keypair.fromSecretKey(Buffer.from(JSON.parse(fs.readFileSync(PAYER_KEYPAIR_PATH, "utf8"))));
 
   // 创建 Provider
   const provider = new AnchorProvider(connection, payer as any, {
@@ -29,9 +31,6 @@ async function main() {
 
   // 创建 Program 实例 - 类型安全
   const program = new Program<Favorites>(idl as Favorites, provider);
-
-  // 调试：查看可用的账户名
-  console.log("Available accounts:", Object.keys(program.account));
 
   const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
   // Airdrop 一些 SOL 以便支付手续费
@@ -54,7 +53,7 @@ async function main() {
 
   // 构建 setFavorites 指令 - 使用 accountsPartial 避免类型检查问题
   const setFavoritesIx = await program.methods
-    .setFavorites(new BN(42), "blue")
+    .setFavorites(new BN(43), "blue")
     .accountsPartial({
       user: payer.publicKey,
       favorites: favoritesPda,
@@ -71,11 +70,18 @@ async function main() {
   );
   console.log("Transaction Signature", txSignature);
 
-  // 查询 favorites 账户 - 类型安全
+  // 查询 favorites 账户 并解析
   const favoritesAccount = await program.account.favorites.fetch(favoritesPda);
-  console.log("Favorites info:", favoritesAccount);
   console.log("Number:", favoritesAccount.number.toString());
   console.log("Color:", favoritesAccount.color);
+
+  // 获取所有 PDA 账户
+  const allAccounts = await connection.getParsedProgramAccounts(program.programId);
+  console.log("All Accounts:", allAccounts.length);
+  for (const account of allAccounts) {
+    console.log("Account:", account.pubkey.toBase58());
+  }
+  
 }
 
 main().catch(console.error); 
