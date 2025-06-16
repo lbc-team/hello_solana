@@ -7,7 +7,7 @@ import {
   SystemProgram,
   PublicKey,
 } from "@solana/web3.js";
-import { Program, BN, AnchorProvider, setProvider, Wallet } from "@coral-xyz/anchor";
+import { Program, BN, AnchorProvider, setProvider } from "@coral-xyz/anchor";
 import idl from "./idl/favorites.json";
 import { PROGRAM_ID, RPC_ENDPOINT } from "./config";
 import { Favorites } from "./types/favorites";
@@ -19,25 +19,21 @@ async function main() {
   // 生成钱包
   const payer = Keypair.generate();
 
-  // 创建 Wallet 对象从 Keypair - 手动实现 Wallet 接口
-  const wallet = {
-    publicKey: payer.publicKey,
+  // 从 Keypair 创建 AnchorWallet 
+  const createAnchorWallet = (keypair: Keypair) => ({
+    publicKey: keypair.publicKey,
     signTransaction: async (tx: any) => {
-      if ('partialSign' in tx) {
-        tx.partialSign(payer);
-      }
+      tx.partialSign(keypair);
       return tx;
     },
     signAllTransactions: async (txs: any[]) => {
-      return txs.map(tx => {
-        if ('partialSign' in tx) {
-          tx.partialSign(payer);
-        }
-        return tx;
-      });
+      txs.forEach(tx => tx.partialSign(keypair));
+      return txs;
     },
-    payer: payer,
-  };
+    payer: keypair,
+  });
+
+  const wallet = createAnchorWallet(payer);
 
   // 创建 Provider
   const provider = new AnchorProvider(connection, wallet, {
