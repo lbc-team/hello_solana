@@ -92,14 +92,52 @@ async function main() {
   const accountInfo = await connection.getAccountInfo(favoritesPda);
   console.log("Account Info:", accountInfo);
 
+  // const accounts = await connection.getMultipleAccountsInfo([favoritesPda, payer.publicKey, program.programId]);
+  // console.log("Accounts:", accounts);
 
-  // 获取所有 PDA 账户
-  const allAccounts = await connection.getParsedProgramAccounts(program.programId);
+  // 获取所有 PDA 账户 (使用未解析版本以获得原始数据)
+  const allAccounts = await connection.getProgramAccounts(program.programId);
   console.log("All Accounts:", allAccounts.length);
+  
   for (const account of allAccounts) {
     console.log("Account:", account.pubkey.toBase58());
+    
+    // 🔍 解析 Favorites 账户数据
+    try {
+      // 检查数据类型，只处理 Buffer 类型的数据
+      if (Buffer.isBuffer(account.account.data)) {
+        // "favorites" 账户类型 对应 IDL 中的 Favorites 结构体
+        const decodedData = program.coder.accounts.decode("favorites", account.account.data);
+        console.log("📊 解析的账户数据:");
+        console.log(`  Number: ${decodedData.number.toString()}`);
+        console.log(`  Color: ${decodedData.color}`);
+      }  
+    } catch (error) {
+      console.log("❌ 解析账户数据失败:", error);
+    }
   }
+
+  // 🔍 获取程序相关的交易签名 - 优化参数
+  console.log("\n📋 获取交易历史...");
   
+  // 本地节点数据会丢失
+  const userSignatures = await connection.getSignaturesForAddress(payer.publicKey);
+  console.log(`用户账户交易数: ${userSignatures.length}`);
+
+  // 📊 显示用户相关的交易详情
+  if (userSignatures.length > 0) {
+    console.log("\n🔍 最近的用户交易:");
+    for (const sig of userSignatures.slice(0, 2)) { // 只显示前 2 个
+      console.log(`  签名: ${sig.signature}`);
+      console.log(`  状态: ${sig.err ? '失败' : '成功'}`);
+      console.log(`  Slot: ${sig.slot}`);
+      
+      // 获取交易详情
+      const txDetail = await connection.getParsedTransaction(sig.signature);
+      console.log("Transaction Info:", txDetail?.meta?.logMessages);
+    }
+  }
+
 }
 
 main().catch(console.error); 
