@@ -2,14 +2,12 @@ import {
   Connection,
   Keypair,
   LAMPORTS_PER_SOL,
-  Transaction,
-  sendAndConfirmTransaction,
   SystemProgram,
   PublicKey,
 } from "@solana/web3.js";
-import { Program, BN, AnchorProvider, setProvider } from "@coral-xyz/anchor";
+import { Program, BN, AnchorProvider } from "@coral-xyz/anchor";
 import idl from "./idl/favorites.json";
-import { PROGRAM_ID, RPC_ENDPOINT, PAYER_KEYPAIR_PATH } from "./config";
+import { RPC_ENDPOINT, PAYER_KEYPAIR_PATH } from "./config";
 import { Favorites } from "./types/favorites";
 import fs from "fs";
 
@@ -42,8 +40,6 @@ async function main() {
     commitment: "confirmed",
   });
 
-  // 设置全局 provider
-  setProvider(provider);
 
   // 创建 Program 实例 - 类型安全
   const program = new Program<Favorites>(idl as Favorites, provider);
@@ -87,10 +83,15 @@ async function main() {
   const txInfo = await connection.getParsedTransaction(tx);
   console.log("交易日志:", txInfo?.meta?.logMessages);
 
-  // 查询某个PDA favorites 账户
+  // 获取某个PDA favorites 账户信息
   const favoritesAccount = await program.account.favorites.fetch(favoritesPda);
   console.log("Number:", favoritesAccount.number.toString());
   console.log("Color:", favoritesAccount.color);
+
+  // 获取 accountinfo
+  const accountInfo = await connection.getAccountInfo(favoritesPda);
+  console.log("Account Info:", accountInfo);
+
 
   // 获取所有 PDA 账户
   const allAccounts = await connection.getParsedProgramAccounts(program.programId);

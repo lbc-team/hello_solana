@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "ts-node src/index.ts",
     "listen": "ts-node src/listen_favorites.ts",
+    "transfer": "ts-node src/transfer.ts",
     "build": "tsc"
   },
   "dependencies": {
