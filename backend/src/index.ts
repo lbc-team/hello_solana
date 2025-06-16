@@ -34,7 +34,9 @@ async function main() {
 
   const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
 
-  if (await connection.getBalance(payer.publicKey) < 10 * LAMPORTS_PER_SOL) {
+  const balance = await connection.getBalance(payer.publicKey);
+  console.log("账户余额:", balance / LAMPORTS_PER_SOL, "SOL");
+  if (balance < 10 * LAMPORTS_PER_SOL) {
     // Airdrop 一些 SOL 以便支付手续费
     const airdropSignature = await connection.requestAirdrop(
       payer.publicKey,
@@ -72,6 +74,9 @@ async function main() {
     [payer]
   );
   console.log("Transaction Signature", txSignature);
+
+  const txInfo = await connection.getParsedTransaction(txSignature);
+  console.log("tx logs:", txInfo?.meta?.logMessages);
 
   // 查询 favorites 账户 并解析
   const favoritesAccount = await program.account.favorites.fetch(favoritesPda);
