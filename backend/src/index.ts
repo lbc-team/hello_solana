@@ -7,7 +7,7 @@ import {
   SystemProgram,
   PublicKey,
 } from "@solana/web3.js";
-import { Program, BN, AnchorProvider, setProvider } from "@coral-xyz/anchor";
+import { Program, BN, AnchorProvider, setProvider, Wallet } from "@coral-xyz/anchor";
 import idl from "./idl/favorites.json";
 import { PROGRAM_ID, RPC_ENDPOINT } from "./config";
 import { Favorites } from "./types/favorites";
@@ -19,8 +19,28 @@ async function main() {
   // 生成钱包
   const payer = Keypair.generate();
 
+  // 创建 Wallet 对象从 Keypair - 手动实现 Wallet 接口
+  const wallet = {
+    publicKey: payer.publicKey,
+    signTransaction: async (tx: any) => {
+      if ('partialSign' in tx) {
+        tx.partialSign(payer);
+      }
+      return tx;
+    },
+    signAllTransactions: async (txs: any[]) => {
+      return txs.map(tx => {
+        if ('partialSign' in tx) {
+          tx.partialSign(payer);
+        }
+        return tx;
+      });
+    },
+    payer: payer,
+  };
+
   // 创建 Provider
-  const provider = new AnchorProvider(connection, payer as any, {
+  const provider = new AnchorProvider(connection, wallet, {
     commitment: "confirmed",
   });
 
@@ -39,6 +59,7 @@ async function main() {
     payer.publicKey,
     LAMPORTS_PER_SOL,
   );
+  
   await connection.confirmTransaction({
     signature: airdropSignature,
     blockhash,
@@ -53,29 +74,30 @@ async function main() {
   );
 
   // 构建 setFavorites 指令 - 使用 accountsPartial 避免类型检查问题
-  const setFavoritesIx = await program.methods
+  const tx = await program.methods
     .setFavorites(new BN(42), "blue")
     .accountsPartial({
-      user: payer.publicKey,
+      user: payer.publicKey,  
       favorites: favoritesPda,
       systemProgram: SystemProgram.programId,
     })
-    .instruction();
+    .rpc();
 
-  // 构建并发送交易
-  const tx = new Transaction().add(setFavoritesIx);
-  const txSignature = await sendAndConfirmTransaction(
-    connection,
-    tx,
-    [payer]
-  );
-  console.log("Transaction Signature", txSignature);
+  console.log("Transaction Signature", tx);
 
-  // 查询 favorites 账户 - 类型安全
+  // 查询某个PDA favorites 账户
   const favoritesAccount = await program.account.favorites.fetch(favoritesPda);
   console.log("Favorites info:", favoritesAccount);
   console.log("Number:", favoritesAccount.number.toString());
   console.log("Color:", favoritesAccount.color);
+
+  // 获取所有 PDA 账户
+  const allAccounts = await connection.getParsedProgramAccounts(program.programId);
+  for (const account of allAccounts) {
+    console.log("Account:", account.pubkey.toBase58());
+  }
+
+  
 }
 
 main().catch(console.error); 
