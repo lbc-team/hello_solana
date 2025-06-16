@@ -10,6 +10,8 @@ import {
 import { Program, BN, AnchorProvider, setProvider } from "@coral-xyz/anchor";
 import idl from "./idl/favorites.json";
 import { PROGRAM_ID, RPC_ENDPOINT } from "./config";
+import { Favorites } from "./types/favorites";
+
 
 async function main() {
   // 连接本地节点
@@ -27,18 +29,26 @@ async function main() {
   setProvider(provider);
 
   // 创建 Program 实例
-  const program = new Program(idl as any, provider);
+  const program = new Program(idl as Favorites, provider);
 
+  // 调试：查看可用的账户名
+  console.log("Available accounts:", Object.keys(program.account));
+
+  const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
   // Airdrop 一些 SOL 以便支付手续费
   const airdropSignature = await connection.requestAirdrop(
     payer.publicKey,
     LAMPORTS_PER_SOL,
   );
-  await connection.confirmTransaction(airdropSignature);
+  await connection.confirmTransaction({
+    signature: airdropSignature,
+    blockhash,
+    lastValidBlockHeight,
+  });
   console.log("Airdrop 完成");
 
   // 计算 PDA
-  const [favoritesPda] = await PublicKey.findProgramAddress(
+  const [favoritesPda] = PublicKey.findProgramAddressSync(
     [Buffer.from("favorites"), payer.publicKey.toBuffer()],
     program.programId
   );
@@ -62,9 +72,9 @@ async function main() {
   );
   console.log("Transaction Signature", txSignature);
 
-//   // 查询 favorites 账户
-//   const favoritesAccount = await program.account.favorites.fetch(favoritesPda);
-//   console.log("Favorites:", favoritesAccount);
+  // 查询 favorites 账户  
+  const favoritesAccount = await (program.account as any)["favorites"].fetch(favoritesPda);
+  console.log("Favorites info:", favoritesAccount);
 }
 
 main().catch(console.error); 
