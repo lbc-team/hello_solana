@@ -1,0 +1,17 @@
+{
+  "name": "solana-backend",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "scripts": {
+    "start": "ts-node src/index.ts",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@coral-xyz/anchor": "^0.31.1",
+    "@solana/web3.js": "^1.92.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "ts-node": "^10.9.2"
+  }
+} 

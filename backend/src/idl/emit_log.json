@@ -1,0 +1,84 @@
+{
+  "address": "9FWbx4DBgnFpVRxvttPQ2RY8AWA57fgvnAqGjrcuBwt7",
+  "metadata": {
+    "name": "emit_log",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "initialize",
+      "discriminator": [
+        175,
+        175,
+        109,
+        31,
+        13,
+        152,
+        155,
+        237
+      ],
+      "accounts": [],
+      "args": []
+    }
+  ],
+  "events": [
+    {
+      "name": "MyEvent",
+      "discriminator": [
+        96,
+        184,
+        197,
+        243,
+        139,
+        2,
+        90,
+        148
+      ]
+    },
+    {
+      "name": "MySecondEvent",
+      "discriminator": [
+        48,
+        215,
+        165,
+        169,
+        66,
+        156,
+        9,
+        164
+      ]
+    }
+  ],
+  "types": [
+    {
+      "name": "MyEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "value",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "MySecondEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "value",
+            "type": "u64"
+          },
+          {
+            "name": "message",
+            "type": "string"
+          }
+        ]
+      }
+    }
+  ]
+}
