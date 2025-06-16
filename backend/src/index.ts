@@ -21,8 +21,24 @@ async function main() {
   // const payer = Keypair.generate();
   const payer = Keypair.fromSecretKey(Buffer.from(JSON.parse(fs.readFileSync(PAYER_KEYPAIR_PATH, "utf8"))));
 
+  // 从 Keypair 创建 AnchorWallet 
+  const createAnchorWallet = (keypair: Keypair) => ({
+    publicKey: keypair.publicKey,
+    signTransaction: async (tx: any) => {
+      tx.partialSign(keypair);
+      return tx;
+    },
+    signAllTransactions: async (txs: any[]) => {
+      txs.forEach(tx => tx.partialSign(keypair));
+      return txs;
+    },
+    payer: keypair,
+  });
+
+  const wallet = createAnchorWallet(payer);
+
   // 创建 Provider
-  const provider = new AnchorProvider(connection, payer as any, {
+  const provider = new AnchorProvider(connection, wallet, {
     commitment: "confirmed",
   });
 
@@ -57,28 +73,21 @@ async function main() {
   );
 
   // 构建 setFavorites 指令 - 使用 accountsPartial 避免类型检查问题
-  const setFavoritesIx = await program.methods
+  const tx = await program.methods
     .setFavorites(new BN(43), "blue")
     .accountsPartial({
-      user: payer.publicKey,
+      user: payer.publicKey,  
       favorites: favoritesPda,
       systemProgram: SystemProgram.programId,
     })
-    .instruction();
+    .rpc();
 
-  // 构建并发送交易
-  const tx = new Transaction().add(setFavoritesIx);
-  const txSignature = await sendAndConfirmTransaction(
-    connection,
-    tx,
-    [payer]
-  );
-  console.log("Transaction Signature", txSignature);
+  console.log("Transaction Signature", tx);
 
-  const txInfo = await connection.getParsedTransaction(txSignature);
-  console.log("tx logs:", txInfo?.meta?.logMessages);
+  const txInfo = await connection.getParsedTransaction(tx);
+  console.log("交易日志:", txInfo?.meta?.logMessages);
 
-  // 查询 favorites 账户 并解析
+  // 查询某个PDA favorites 账户
   const favoritesAccount = await program.account.favorites.fetch(favoritesPda);
   console.log("Number:", favoritesAccount.number.toString());
   console.log("Color:", favoritesAccount.color);
