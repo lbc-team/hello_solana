@@ -3,7 +3,7 @@ import { Program } from "@coral-xyz/anchor";
 import { expect } from "chai";
 
 // 这里可以根据实际生成的类型替换 any
-
+// .only 只运行这个测试用例
 describe("emit_log", () => {
     anchor.setProvider(anchor.AnchorProvider.env());
     const program = anchor.workspace.EmitLog as Program<any>;
