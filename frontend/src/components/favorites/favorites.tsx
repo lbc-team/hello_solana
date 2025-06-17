@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useWalletUi, useWalletUiCluster } from '@wallet-ui/react'
-import { Connection, PublicKey, SystemProgram, Transaction } from '@solana/web3.js'
+import { useState, useEffect, useCallback } from 'react'
+import { useConnection, useWallet, useAnchorWallet } from '@solana/wallet-adapter-react'
+import { PublicKey, SystemProgram } from '@solana/web3.js'
 import { Program, AnchorProvider, BN } from '@coral-xyz/anchor'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,20 +10,10 @@ import { Label } from '@/components/ui/label'
 import { useTransactionToast } from '@/components/use-transaction-toast'
 import { FAVORITES_IDL, type Favorites } from '@/lib/favorites'
 
-// 声明 Phantom 钱包类型
-declare global {
-  interface Window {
-    solana?: {
-      signTransaction?: (transaction: Transaction) => Promise<Transaction>
-      signAllTransactions?: (transactions: Transaction[]) => Promise<Transaction[]>
-      isPhantom?: boolean
-    }
-  }
-}
-
 export function Favorites() {
-  const { account } = useWalletUi()
-  const { cluster } = useWalletUiCluster()
+  const { connection } = useConnection()
+  const { publicKey, connected } = useWallet()
+  const anchorWallet = useAnchorWallet()
   const transactionToast = useTransactionToast()
   
   const [number, setNumber] = useState('')
@@ -31,19 +21,6 @@ export function Favorites() {
   const [favoriteData, setFavoriteData] = useState<{number: number, color: string} | null>(null)
   const [loading, setLoading] = useState(false)
   const [allFavorites, setAllFavorites] = useState<Array<{publicKey: string, data: {number: number, color: string}}>>([])
-
-  // 获取连接
-  const getConnection = () => {
-    // 根据集群获取 RPC 端点
-    let endpoint = 'http://localhost:8899' // 默认本地
-    if (cluster.id.includes('devnet')) {
-      endpoint = 'https://api.devnet.solana.com'
-    } else if (cluster.id.includes('mainnet')) {
-      endpoint = 'https://api.mainnet-beta.solana.com'
-    }
-    
-    return new Connection(endpoint, 'confirmed')
-  }
 
   // 计算 PDA
   const getFavoritesPDA = (userPublicKey: PublicKey) => {
@@ -54,8 +31,24 @@ export function Favorites() {
     )[0]
   }
 
+  // 获取当前网络信息
+  const getNetworkInfo = () => {
+    const endpoint = connection.rpcEndpoint
+    let networkName = '未知网络'
+    
+    if (endpoint.includes('localhost') || endpoint.includes('127.0.0.1')) {
+      networkName = '本地测试网'
+    } else if (endpoint.includes('devnet')) {
+      networkName = '开发测试网'
+    } else if (endpoint.includes('mainnet')) {
+      networkName = '主网'
+    }
+    
+    return { endpoint, networkName }
+  }
+
   const setFavorites = async () => {
-    if (!account || !number || !color) {
+    if (!connected || !publicKey || !anchorWallet || !number || !color) {
       alert('请连接钱包并填写所有字段')
       return
     }
@@ -63,20 +56,16 @@ export function Favorites() {
     setLoading(true)
     try {
       console.log('=== 开始设置 Favorites ===')
-      console.log('用户地址:', account.address)
+      console.log('用户地址:', publicKey.toBase58())
       console.log('数字:', number)
       console.log('颜色:', color)
-      console.log('集群:', cluster.id)
       console.log('程序ID:', FAVORITES_IDL.address)
       
-      const connection = getConnection()
-      const userPublicKey = new PublicKey(account.address)
-      const favoritesPDA = getFavoritesPDA(userPublicKey)
-      
+      const favoritesPDA = getFavoritesPDA(publicKey)
       console.log('计算的 PDA:', favoritesPDA.toBase58())
       
       // 检查用户余额
-      const balance = await connection.getBalance(userPublicKey)
+      const balance = await connection.getBalance(publicKey)
       console.log('用户余额:', balance / 1e9, 'SOL')
       
       if (balance < 0.01 * 1e9) {
@@ -84,33 +73,10 @@ export function Favorites() {
         return
       }
       
-      // 检查 Phantom 钱包是否可用
-      if (!window.solana || !window.solana.signTransaction) {
-        alert('请安装并连接 Phantom 钱包')
-        return
-      }
-      
       console.log('构建 Favorites 合约交易...')
       
-      // 创建 Anchor 钱包适配器
-      const wallet = {
-        publicKey: userPublicKey,
-        signTransaction: async (tx: Transaction) => {
-          if (window.solana?.signTransaction) {
-            return await window.solana.signTransaction(tx)
-          }
-          throw new Error('钱包不支持签名')
-        },
-        signAllTransactions: async (txs: Transaction[]) => {
-          if (window.solana?.signAllTransactions) {
-            return await window.solana.signAllTransactions(txs)
-          }
-          throw new Error('钱包不支持批量签名')
-        },
-      } as any // 使用 any 绕过类型检查
-      
       // 创建 AnchorProvider
-      const provider = new AnchorProvider(connection, wallet, {
+      const provider = new AnchorProvider(connection, anchorWallet, {
         commitment: 'confirmed',
       })
       
@@ -118,14 +84,13 @@ export function Favorites() {
       const program = new Program<Favorites>(FAVORITES_IDL as Favorites, provider)
       
       console.log('构建 setFavorites 指令...')
-      console.log('PDA:', favoritesPDA.toBase58())
       
       try {
         // 构建并发送真实的 favorites 交易
         const tx = await program.methods
           .setFavorites(new BN(number), color)
           .accountsPartial({
-            user: userPublicKey,
+            user: publicKey,
             favorites: favoritesPDA,
             systemProgram: SystemProgram.programId,
           })
@@ -171,25 +136,16 @@ export function Favorites() {
     }
   }
 
-  const fetchFavorites = async () => {
-    if (!account) return
+  const fetchFavorites = useCallback(async () => {
+    if (!connected || !publicKey || !anchorWallet) return
 
     try {
       console.log('=== 获取 Favorites 数据 ===')
-      const connection = getConnection()
-      const userPublicKey = new PublicKey(account.address)
-      const favoritesPDA = getFavoritesPDA(userPublicKey)
-      
+      const favoritesPDA = getFavoritesPDA(publicKey)
       console.log('查询 PDA:', favoritesPDA.toBase58())
       
-      // 创建简单的钱包适配器用于读取数据
-      const wallet = {
-        publicKey: userPublicKey,
-        signTransaction: async () => { throw new Error('读取数据不需要签名') },
-        signAllTransactions: async () => { throw new Error('读取数据不需要签名') },
-      } as any
-      
-      const provider = new AnchorProvider(connection, wallet, { commitment: 'confirmed' })
+      // 创建 AnchorProvider
+      const provider = new AnchorProvider(connection, anchorWallet, { commitment: 'confirmed' })
       const program = new Program<Favorites>(FAVORITES_IDL as Favorites, provider)
       
       // 使用 Anchor 程序获取账户数据
@@ -214,22 +170,17 @@ export function Favorites() {
         setFavoriteData(null)
       }
     }
-  }
+  }, [connected, publicKey, anchorWallet, connection])
 
-  const fetchAllFavorites = async () => {
+  const fetchAllFavorites = useCallback(async () => {
+    if (!anchorWallet) return
+
     try {
       console.log('=== 获取所有 Favorites ===')
-      const connection = getConnection()
       const programId = new PublicKey(FAVORITES_IDL.address)
       
-      // 创建简单的钱包适配器用于读取数据
-      const wallet = {
-        publicKey: new PublicKey('11111111111111111111111111111111'), // 虚拟公钥
-        signTransaction: async () => { throw new Error('读取数据不需要签名') },
-        signAllTransactions: async () => { throw new Error('读取数据不需要签名') },
-      } as any
-      
-      const provider = new AnchorProvider(connection, wallet, { commitment: 'confirmed' })
+      // 创建 AnchorProvider
+      const provider = new AnchorProvider(connection, anchorWallet, { commitment: 'confirmed' })
       const program = new Program<Favorites>(FAVORITES_IDL as Favorites, provider)
       
       const accounts = await connection.getProgramAccounts(programId)
@@ -259,26 +210,29 @@ export function Favorites() {
       console.error('获取所有 favorites 失败:', error)
       setAllFavorites([])
     }
-  }
+  }, [anchorWallet, connection])
 
   // 当钱包连接时自动获取数据
   useEffect(() => {
-    if (account) {
+    if (connected && publicKey) {
       fetchFavorites()
       fetchAllFavorites()
     } else {
       setFavoriteData(null)
       setAllFavorites([])
     }
-  }, [account])
+  }, [connected, publicKey, fetchFavorites, fetchAllFavorites])
+
+  const networkInfo = getNetworkInfo()
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
       <h2 className="text-3xl font-bold text-center">Favorites 合约调用演示</h2>
       
-      {!account ? (
+      {!connected ? (
         <div className="text-center p-8 bg-gray-100 dark:bg-gray-800 rounded-lg">
           <p className="text-lg mb-4">请先连接钱包</p>
+          <p className="text-sm text-gray-500">点击右上角的钱包按钮连接</p>
         </div>
       ) : (
         <div className="grid md:grid-cols-2 gap-6">
@@ -344,7 +298,7 @@ export function Favorites() {
       )}
 
       {/* 所有 Favorites */}
-      {account && (
+      {connected && (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-xl font-semibold">所有 Favorites ({allFavorites.length})</h3>
@@ -371,14 +325,15 @@ export function Favorites() {
       )}
 
       {/* 调试信息 */}
-      {account && (
+      {connected && publicKey && (
         <div className="bg-gray-100 dark:bg-gray-900 rounded-lg p-4">
           <h4 className="font-semibold mb-2">调试信息</h4>
           <div className="text-sm space-y-1">
-            <p><strong>钱包地址:</strong> {account.address}</p>
-            <p><strong>集群:</strong> {cluster.id}</p>
+            <p><strong>钱包地址:</strong> {publicKey.toBase58()}</p>
+            <p><strong>网络:</strong> {networkInfo.networkName}</p>
+            <p><strong>RPC 端点:</strong> {networkInfo.endpoint}</p>
             <p><strong>程序ID:</strong> {FAVORITES_IDL.address}</p>
-            <p><strong>PDA:</strong> {account.address ? getFavoritesPDA(new PublicKey(account.address)).toBase58() : 'N/A'}</p>
+            <p><strong>PDA:</strong> {getFavoritesPDA(publicKey).toBase58()}</p>
           </div>
         </div>
       )}

@@ -18,9 +18,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { AppModal } from '@/components/app-modal'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { UiWalletAccount, useWalletUi, useWalletUiCluster } from '@wallet-ui/react'
-import { address, Address, Lamports, lamportsToSol } from 'gill'
+import { useWallet, useConnection } from '@solana/wallet-adapter-react'
+// 自定义类型和工具函数替代 gill
+type Address = string
+type Lamports = number
+
+const lamportsToSol = (lamports: number) => (lamports / 1_000_000_000).toFixed(9)
+const address = (addressString: string) => addressString
 import { ErrorBoundary } from 'next/dist/client/components/error-boundary'
+import { PublicKey } from '@solana/web3.js'
 
 export function AccountBalance({ address }: { address: Address }) {
   const query = useGetBalance({ address })
@@ -33,17 +39,35 @@ export function AccountBalance({ address }: { address: Address }) {
 }
 
 export function AccountChecker() {
-  const { account } = useWalletUi()
-  if (!account) {
+  const { publicKey } = useWallet()
+  if (!publicKey) {
     return null
   }
-  return <AccountBalanceCheck address={address(account.address)} />
+  return <AccountBalanceCheck address={address(publicKey.toString())} />
 }
 
 export function AccountBalanceCheck({ address }: { address: Address }) {
-  const { cluster } = useWalletUiCluster()
+  const { connection } = useConnection()
   const mutation = useRequestAirdrop({ address })
   const query = useGetBalance({ address })
+
+  // 获取网络信息
+  const getNetworkInfo = () => {
+    const endpoint = connection.rpcEndpoint
+    let networkName = '未知网络'
+    
+    if (endpoint.includes('localhost') || endpoint.includes('127.0.0.1')) {
+      networkName = '本地测试网'
+    } else if (endpoint.includes('devnet')) {
+      networkName = '开发测试网'
+    } else if (endpoint.includes('mainnet')) {
+      networkName = '主网'
+    }
+    
+    return { endpoint, networkName }
+  }
+
+  const networkInfo = getNetworkInfo()
 
   if (query.isLoading) {
     return null
@@ -53,11 +77,11 @@ export function AccountBalanceCheck({ address }: { address: Address }) {
       <AppAlert
         action={
           <Button variant="outline" onClick={() => mutation.mutateAsync(1).catch((err) => console.log(err))}>
-            Request Airdrop
+            申请空投
           </Button>
         }
       >
-        You are connected to <strong>{cluster.label}</strong> but your account is not found on this cluster.
+        您已连接到 <strong>{networkInfo.networkName}</strong>，但在此集群上找不到您的账户。
       </AppAlert>
     )
   }
@@ -65,14 +89,23 @@ export function AccountBalanceCheck({ address }: { address: Address }) {
 }
 
 export function AccountButtons({ address }: { address: Address }) {
-  const { cluster } = useWalletUiCluster()
-  const { account } = useWalletUi()
+  const { connection } = useConnection()
+  const { publicKey } = useWallet()
+  
+  // 获取网络信息  
+  const getNetworkInfo = () => {
+    const endpoint = connection.rpcEndpoint
+    return endpoint.includes('mainnet')
+  }
+
+  const isMainnet = getNetworkInfo()
+
   return (
     <div>
       <div className="space-x-2">
-        {cluster.urlOrMoniker === 'mainnet' ? null : <ModalAirdrop address={address} />}
+        {isMainnet ? null : <ModalAirdrop address={address} />}
         <ErrorBoundary errorComponent={() => null}>
-          {account ? <ModalSend address={address} account={account} /> : null}
+          {publicKey ? <ModalSend address={address} publicKey={publicKey} /> : null}
         </ErrorBoundary>
         <ModalReceive address={address} />
       </div>
@@ -93,7 +126,7 @@ export function AccountTokens({ address }: { address: Address }) {
     <div className="space-y-2">
       <div className="justify-between">
         <div className="flex justify-between">
-          <h2 className="text-2xl font-bold">Token Accounts</h2>
+          <h2 className="text-2xl font-bold">代币账户</h2>
           <div className="space-x-2">
             {query.isLoading ? (
               <span className="loading loading-spinner"></span>
@@ -113,18 +146,18 @@ export function AccountTokens({ address }: { address: Address }) {
           </div>
         </div>
       </div>
-      {query.isError && <pre className="alert alert-error">Error: {query.error?.message.toString()}</pre>}
+      {query.isError && <pre className="alert alert-error">错误: {query.error?.message.toString()}</pre>}
       {query.isSuccess && (
         <div>
           {query.data.length === 0 ? (
-            <div>No token accounts found.</div>
+            <div>未找到代币账户。</div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Public Key</TableHead>
-                  <TableHead>Mint</TableHead>
-                  <TableHead className="text-right">Balance</TableHead>
+                  <TableHead>公钥</TableHead>
+                  <TableHead>铸币厂</TableHead>
+                  <TableHead className="text-right">余额</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -157,7 +190,7 @@ export function AccountTokens({ address }: { address: Address }) {
                   <TableRow>
                     <TableCell colSpan={4} className="text-center">
                       <Button variant="outline" onClick={() => setShowAll(!showAll)}>
-                        {showAll ? 'Show Less' : 'Show All'}
+                        {showAll ? '显示更少' : '显示全部'}
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -183,7 +216,7 @@ export function AccountTransactions({ address }: { address: Address }) {
   return (
     <div className="space-y-2">
       <div className="flex justify-between">
-        <h2 className="text-2xl font-bold">Transaction History</h2>
+        <h2 className="text-2xl font-bold">交易历史</h2>
         <div className="space-x-2">
           {query.isLoading ? (
             <span className="loading loading-spinner"></span>
@@ -194,19 +227,19 @@ export function AccountTransactions({ address }: { address: Address }) {
           )}
         </div>
       </div>
-      {query.isError && <pre className="alert alert-error">Error: {query.error?.message.toString()}</pre>}
+      {query.isError && <pre className="alert alert-error">错误: {query.error?.message.toString()}</pre>}
       {query.isSuccess && (
         <div>
           {query.data.length === 0 ? (
-            <div>No transactions found.</div>
+            <div>未找到交易。</div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Signature</TableHead>
-                  <TableHead className="text-right">Slot</TableHead>
-                  <TableHead>Block Time</TableHead>
-                  <TableHead className="text-right">Status</TableHead>
+                  <TableHead>签名</TableHead>
+                  <TableHead className="text-right">槽位</TableHead>
+                  <TableHead>区块时间</TableHead>
+                  <TableHead className="text-right">状态</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -222,10 +255,10 @@ export function AccountTransactions({ address }: { address: Address }) {
                     <TableCell className="text-right">
                       {item.err ? (
                         <span className="text-red-500" title={item.err.toString()}>
-                          Failed
+                          失败
                         </span>
                       ) : (
-                        <span className="text-green-500">Success</span>
+                        <span className="text-green-500">成功</span>
                       )}
                     </TableCell>
                   </TableRow>
@@ -234,7 +267,7 @@ export function AccountTransactions({ address }: { address: Address }) {
                   <TableRow>
                     <TableCell colSpan={4} className="text-center">
                       <Button variant="outline" onClick={() => setShowAll(!showAll)}>
-                        {showAll ? 'Show Less' : 'Show All'}
+                        {showAll ? '显示更少' : '显示全部'}
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -254,8 +287,8 @@ function BalanceSol({ balance }: { balance: Lamports }) {
 
 function ModalReceive({ address }: { address: Address }) {
   return (
-    <AppModal title="Receive">
-      <p>Receive assets by sending them to your public key:</p>
+    <AppModal title="接收">
+      <p>通过将资产发送到您的公钥来接收资产：</p>
       <code>{address.toString()}</code>
     </AppModal>
   )
@@ -267,18 +300,18 @@ function ModalAirdrop({ address }: { address: Address }) {
 
   return (
     <AppModal
-      title="Airdrop"
+      title="申请空投"
       submitDisabled={!amount || mutation.isPending}
-      submitLabel="Request Airdrop"
+      submitLabel="申请空投"
       submit={() => mutation.mutateAsync(parseFloat(amount))}
     >
-      <Label htmlFor="amount">Amount</Label>
+      <Label htmlFor="amount">数量</Label>
       <Input
         disabled={mutation.isPending}
         id="amount"
         min="1"
         onChange={(e) => setAmount(e.target.value)}
-        placeholder="Amount"
+        placeholder="数量"
         step="any"
         type="number"
         value={amount}
@@ -287,20 +320,20 @@ function ModalAirdrop({ address }: { address: Address }) {
   )
 }
 
-function ModalSend(props: { address: Address; account: UiWalletAccount }) {
-  const mutation = useTransferSol({ address: props.address, account: props.account })
+function ModalSend(props: { address: Address; publicKey: PublicKey }) {
+  const mutation = useTransferSol({ address: props.address, publicKey: props.publicKey })
   const [destination, setDestination] = useState('')
   const [amount, setAmount] = useState('1')
 
-  if (!props.address || !props.account) {
-    return <div>Wallet not connected</div>
+  if (!props.address || !props.publicKey) {
+    return <div>钱包未连接</div>
   }
 
   return (
     <AppModal
-      title="Send"
+      title="发送"
       submitDisabled={!destination || !amount || mutation.isPending}
-      submitLabel="Send"
+      submitLabel="发送"
       submit={() => {
         mutation.mutateAsync({
           destination: address(destination),
@@ -308,22 +341,22 @@ function ModalSend(props: { address: Address; account: UiWalletAccount }) {
         })
       }}
     >
-      <Label htmlFor="destination">Destination</Label>
+      <Label htmlFor="destination">目标地址</Label>
       <Input
         disabled={mutation.isPending}
         id="destination"
         onChange={(e) => setDestination(e.target.value)}
-        placeholder="Destination"
+        placeholder="目标地址"
         type="text"
         value={destination}
       />
-      <Label htmlFor="amount">Amount</Label>
+      <Label htmlFor="amount">数量</Label>
       <Input
         disabled={mutation.isPending}
         id="amount"
         min="1"
         onChange={(e) => setAmount(e.target.value)}
-        placeholder="Amount"
+        placeholder="数量"
         step="any"
         type="number"
         value={amount}

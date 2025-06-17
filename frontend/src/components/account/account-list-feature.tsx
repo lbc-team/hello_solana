@@ -1,21 +1,20 @@
 'use client'
 
-import { WalletButton } from '../solana/solana-provider'
-
+import { WalletMultiButton } from '../solana/solana-provider'
 import { redirect } from 'next/navigation'
-import { useWalletUi } from '@wallet-ui/react'
+import { useWallet } from '@solana/wallet-adapter-react'
 
 export default function AccountListFeature() {
-  const { account } = useWalletUi()
+  const { publicKey } = useWallet()
 
-  if (account) {
-    return redirect(`/account/${account.address.toString()}`)
+  if (publicKey) {
+    return redirect(`/account/${publicKey.toString()}`)
   }
 
   return (
     <div className="hero py-[64px]">
       <div className="hero-content text-center">
-        <WalletButton />
+        <WalletMultiButton />
       </div>
     </div>
   )

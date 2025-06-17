@@ -1,8 +1,11 @@
 # 常用的 RPC 方法列表
 
 参考： https://solana.com/zh/docs/rpc/http
-solana-kit(Solana web3.js v2) api: https://solana-kit-docs.vercel.app/api
 
+Solana web3.js api: https://github.com/solana-foundation/solana-web3.js
+
+
+solana-kit(Solana web3.js v2) api: https://solana-kit-docs.vercel.app/api
 solana-kit 所有的函数都在 gill 中导出了，并提供一个附加方法
 
 
