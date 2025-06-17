@@ -39,14 +39,14 @@ export function useGetTokenAccounts({ address }: { address: Address }) {
           .getParsedTokenAccountsByOwner(
             new PublicKey(address.toString()),
             { programId: TOKEN_PROGRAM_ID },
-            { commitment: 'confirmed' },
+            'confirmed',
           )
           .then((res) => res.value ?? []),
         connection
           .getParsedTokenAccountsByOwner(
             new PublicKey(address.toString()),
             { programId: TOKEN_2022_PROGRAM_ID },
-            { commitment: 'confirmed' },
+            'confirmed',
           )
           .then((res) => res.value ?? []),
       ]).then(([tokenAccounts, token2022Accounts]) => [...tokenAccounts, ...token2022Accounts]),

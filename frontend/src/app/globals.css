@@ -136,30 +136,85 @@
   @apply text-sm;
 }
 
-.wallet-adapter-modal-wrapper {
-  @apply fixed inset-0 z-50 flex items-center justify-center;
-  @apply bg-black/50 backdrop-blur-sm;
-}
-
+/* 钱包连接模态框整体覆盖层 - 使用!important确保覆盖默认样式 */
 .wallet-adapter-modal {
-  @apply bg-background border border-border rounded-lg shadow-lg;
-  @apply p-6 max-w-sm w-full mx-4;
+  background: rgba(0, 0, 0, 0.6) !important;
+  backdrop-filter: blur(8px) !important;
 }
 
+/* 钱包连接模态框容器 - 居中显示 */
+.wallet-adapter-modal-container {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 2rem !important;
+  min-height: calc(100vh - 4rem) !important;
+}
+
+/* 钱包连接模态框主体 - 使用!important确保覆盖默认样式 */
+.wallet-adapter-modal-wrapper {
+  background-color: hsl(var(--background)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: 12px !important;
+  max-width: 400px !important;
+  width: 100% !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+  animation: modalFadeIn 0.3s ease-out !important;
+  position: relative !important;
+}
+
+/* 模态框标题 - 使用!important确保覆盖默认样式 */
 .wallet-adapter-modal-title {
-  @apply text-lg font-semibold mb-4 text-foreground;
+  font-size: 20px !important;
+  font-weight: bold !important;
+  margin-bottom: 24px !important;
+  color: hsl(var(--foreground)) !important;
+  text-align: center !important;
 }
 
+/* 钱包列表容器 - 使用!important确保覆盖默认样式 */
 .wallet-adapter-modal-list {
-  @apply space-y-2;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
 }
 
-.wallet-adapter-modal-list-item {
-  @apply px-4 py-2 rounded-md font-medium transition-all duration-200;
-  @apply bg-primary text-primary-foreground hover:bg-primary/90;
-  @apply border border-input;
-  @apply text-sm w-full text-left justify-start;
-  @apply hover:bg-accent hover:text-accent-foreground;
+/* 钱包列表项按钮 - 使用!important确保覆盖默认样式 */
+.wallet-adapter-modal-list .wallet-adapter-button {
+  background-color: hsl(var(--card)) !important;
+  color: hsl(var(--card-foreground)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: 8px !important;
+  padding: 12px 16px !important;
+  margin-bottom: 8px !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease !important;
+  font-size: 16px !important;
+  height: auto !important;
+  line-height: normal !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+}
+
+.wallet-adapter-modal-list .wallet-adapter-button:hover {
+  background-color: hsl(var(--accent)) !important;
+  color: hsl(var(--accent-foreground)) !important;
+  border-color: hsl(var(--accent)) !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+  transform: scale(1.02) !important;
+}
+
+/* 模态框淡入动画 */
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .wallet-button-container .wallet-adapter-button {
