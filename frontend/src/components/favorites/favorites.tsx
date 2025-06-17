@@ -3,17 +3,18 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useConnection, useWallet, useAnchorWallet } from '@solana/wallet-adapter-react'
 import { PublicKey, SystemProgram } from '@solana/web3.js'
-import { Program, AnchorProvider, BN } from '@coral-xyz/anchor'
+import { BN } from '@coral-xyz/anchor'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useTransactionToast } from '@/components/use-transaction-toast'
-import { FAVORITES_IDL, type Favorites } from '@/lib/favorites'
+import { FAVORITES_IDL, type Favorites, useFavoritesProgram } from '@/favorites'
 
 export function Favorites() {
   const { connection } = useConnection()
   const { publicKey, connected } = useWallet()
   const anchorWallet = useAnchorWallet()
+  const favoritesProgram = useFavoritesProgram()
   const transactionToast = useTransactionToast()
   
   const [number, setNumber] = useState('')
@@ -48,7 +49,7 @@ export function Favorites() {
   }
 
   const setFavorites = async () => {
-    if (!connected || !publicKey || !anchorWallet || !number || !color) {
+    if (!connected || !publicKey || !anchorWallet || !number || !color || !favoritesProgram) {
       alert('请连接钱包并填写所有字段')
       return
     }
@@ -59,7 +60,6 @@ export function Favorites() {
       console.log('用户地址:', publicKey.toBase58())
       console.log('数字:', number)
       console.log('颜色:', color)
-      console.log('程序ID:', FAVORITES_IDL.address)
       
       const favoritesPDA = getFavoritesPDA(publicKey)
       console.log('计算的 PDA:', favoritesPDA.toBase58())
@@ -75,13 +75,8 @@ export function Favorites() {
       
       console.log('构建 Favorites 合约交易...')
       
-      // 创建 AnchorProvider
-      const provider = new AnchorProvider(connection, anchorWallet, {
-        commitment: 'confirmed',
-      })
-      
-      // 创建 Program 实例
-      const program = new Program<Favorites>(FAVORITES_IDL as Favorites, provider)
+      // 使用复用的程序实例
+      const { program } = favoritesProgram
       
       console.log('构建 setFavorites 指令...')
       
@@ -137,16 +132,15 @@ export function Favorites() {
   }
 
   const fetchFavorites = useCallback(async () => {
-    if (!connected || !publicKey || !anchorWallet) return
+    if (!connected || !publicKey || !anchorWallet || !favoritesProgram) return
 
     try {
       console.log('=== 获取 Favorites 数据 ===')
       const favoritesPDA = getFavoritesPDA(publicKey)
       console.log('查询 PDA:', favoritesPDA.toBase58())
       
-      // 创建 AnchorProvider
-      const provider = new AnchorProvider(connection, anchorWallet, { commitment: 'confirmed' })
-      const program = new Program<Favorites>(FAVORITES_IDL as Favorites, provider)
+      // 使用复用的程序实例
+      const { program } = favoritesProgram
       
       // 使用 Anchor 程序获取账户数据
       const favoritesAccount = await program.account.favorites.fetch(favoritesPDA)
@@ -170,18 +164,17 @@ export function Favorites() {
         setFavoriteData(null)
       }
     }
-  }, [connected, publicKey, anchorWallet, connection])
+  }, [connected, publicKey, anchorWallet, favoritesProgram])
 
   const fetchAllFavorites = useCallback(async () => {
-    if (!anchorWallet) return
+    if (!anchorWallet || !favoritesProgram) return
 
     try {
       console.log('=== 获取所有 Favorites ===')
       const programId = new PublicKey(FAVORITES_IDL.address)
       
-      // 创建 AnchorProvider
-      const provider = new AnchorProvider(connection, anchorWallet, { commitment: 'confirmed' })
-      const program = new Program<Favorites>(FAVORITES_IDL as Favorites, provider)
+      // 使用复用的程序实例
+      const { program } = favoritesProgram
       
       const accounts = await connection.getProgramAccounts(programId)
       console.log('找到', accounts.length, '个 Favorites 账户')
@@ -210,7 +203,7 @@ export function Favorites() {
       console.error('获取所有 favorites 失败:', error)
       setAllFavorites([])
     }
-  }, [anchorWallet, connection])
+  }, [anchorWallet, favoritesProgram, connection])
 
   // 当钱包连接时自动获取数据
   useEffect(() => {

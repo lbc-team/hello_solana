@@ -212,4 +212,5 @@ export const FAVORITES_IDL = {
       }
     }
   ]
-}; 
+};
+
