@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { FAVORITES_IDL } from '@/lib/favorites'
 
-export function FavoritesAdvanced() {
+export function Favorites() {
   const { account } = useWalletUi()
   const { cluster } = useWalletUiCluster()
   
