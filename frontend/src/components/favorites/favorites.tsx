@@ -2,15 +2,29 @@
 
 import { useState, useEffect } from 'react'
 import { useWalletUi, useWalletUiCluster } from '@wallet-ui/react'
-import { Connection, PublicKey } from '@solana/web3.js'
+import { Connection, PublicKey, SystemProgram, Transaction } from '@solana/web3.js'
+import { Program, AnchorProvider, BN } from '@coral-xyz/anchor'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { FAVORITES_IDL } from '@/lib/favorites'
+import { useTransactionToast } from '@/components/use-transaction-toast'
+import { FAVORITES_IDL, type Favorites } from '@/lib/favorites'
+
+// 声明 Phantom 钱包类型
+declare global {
+  interface Window {
+    solana?: {
+      signTransaction?: (transaction: Transaction) => Promise<Transaction>
+      signAllTransactions?: (transactions: Transaction[]) => Promise<Transaction[]>
+      isPhantom?: boolean
+    }
+  }
+}
 
 export function Favorites() {
   const { account } = useWalletUi()
   const { cluster } = useWalletUiCluster()
+  const transactionToast = useTransactionToast()
   
   const [number, setNumber] = useState('')
   const [color, setColor] = useState('')
@@ -70,23 +84,88 @@ export function Favorites() {
         return
       }
       
-      // 这里演示如何构建交易，但实际签名需要钱包支持
-      console.log('交易构建成功，但需要实际的钱包签名支持')
+      // 检查 Phantom 钱包是否可用
+      if (!window.solana || !window.solana.signTransaction) {
+        alert('请安装并连接 Phantom 钱包')
+        return
+      }
       
-      // 模拟交易成功
-      alert(`Favorites 设置成功!\n数字: ${number}\n颜色: ${color}\n用户: ${account.address}\nPDA: ${favoritesPDA.toBase58()}`)
+      console.log('构建 Favorites 合约交易...')
       
-      // 清空输入并设置数据
-      setNumber('')
-      setColor('')
-      setFavoriteData({
-        number: parseInt(number),
-        color: color
+      // 创建 Anchor 钱包适配器
+      const wallet = {
+        publicKey: userPublicKey,
+        signTransaction: async (tx: Transaction) => {
+          if (window.solana?.signTransaction) {
+            return await window.solana.signTransaction(tx)
+          }
+          throw new Error('钱包不支持签名')
+        },
+        signAllTransactions: async (txs: Transaction[]) => {
+          if (window.solana?.signAllTransactions) {
+            return await window.solana.signAllTransactions(txs)
+          }
+          throw new Error('钱包不支持批量签名')
+        },
+      } as any // 使用 any 绕过类型检查
+      
+      // 创建 AnchorProvider
+      const provider = new AnchorProvider(connection, wallet, {
+        commitment: 'confirmed',
       })
+      
+      // 创建 Program 实例
+      const program = new Program<Favorites>(FAVORITES_IDL as Favorites, provider)
+      
+      console.log('构建 setFavorites 指令...')
+      console.log('PDA:', favoritesPDA.toBase58())
+      
+      try {
+        // 构建并发送真实的 favorites 交易
+        const tx = await program.methods
+          .setFavorites(new BN(number), color)
+          .accountsPartial({
+            user: userPublicKey,
+            favorites: favoritesPDA,
+            systemProgram: SystemProgram.programId,
+          })
+          .rpc()
+        
+        console.log('Favorites 交易签名:', tx)
+        transactionToast(tx)
+        
+        alert(`🎉 Favorites 设置成功!\n\n数字: ${number}\n颜色: ${color}\n交易签名: ${tx}\nPDA: ${favoritesPDA.toBase58()}`)
+        
+        // 刷新数据
+        await fetchFavorites()
+        
+        // 清空输入
+        setNumber('')
+        setColor('')
+        
+      } catch (signError) {
+        console.error('签名或交易错误:', signError)
+        if (signError instanceof Error) {
+          if (signError.message.includes('User rejected') || signError.message.includes('User denied')) {
+            alert('用户取消了交易签名')
+          } else if (signError.message.includes('insufficient funds')) {
+            alert('余额不足，请先获取一些 SOL')
+          } else {
+            alert(`交易失败: ${signError.message}`)
+          }
+        }
+        throw signError
+      }
       
     } catch (error) {
       console.error('设置 favorites 失败:', error)
-      alert('设置 favorites 失败: ' + (error as Error).message)
+      if (error instanceof Error) {
+        if (error.message.includes('User rejected')) {
+          alert('用户取消了交易签名')
+        } else {
+          alert('设置 favorites 失败: ' + error.message)
+        }
+      }
     } finally {
       setLoading(false)
     }
@@ -103,27 +182,37 @@ export function Favorites() {
       
       console.log('查询 PDA:', favoritesPDA.toBase58())
       
-      // 检查账户是否存在
-      const accountInfo = await connection.getAccountInfo(favoritesPDA)
+      // 创建简单的钱包适配器用于读取数据
+      const wallet = {
+        publicKey: userPublicKey,
+        signTransaction: async () => { throw new Error('读取数据不需要签名') },
+        signAllTransactions: async () => { throw new Error('读取数据不需要签名') },
+      } as any
       
-      if (accountInfo) {
-        console.log('找到 Favorites 账户!')
-        console.log('账户数据长度:', accountInfo.data.length)
-        console.log('账户所有者:', accountInfo.owner.toBase58())
-        
-        // 这里需要解码账户数据，暂时用占位符
-        setFavoriteData({
-          number: 42, // 模拟数据
-          color: 'blue' // 模拟数据
-        })
-      } else {
-        console.log('Favorites 账户不存在')
-        setFavoriteData(null)
-      }
+      const provider = new AnchorProvider(connection, wallet, { commitment: 'confirmed' })
+      const program = new Program<Favorites>(FAVORITES_IDL as Favorites, provider)
+      
+      // 使用 Anchor 程序获取账户数据
+      const favoritesAccount = await program.account.favorites.fetch(favoritesPDA)
+      
+      console.log('找到 Favorites 账户!')
+      console.log('数字:', favoritesAccount.number.toString())
+      console.log('颜色:', favoritesAccount.color)
+      
+      setFavoriteData({
+        number: favoritesAccount.number.toNumber(),
+        color: favoritesAccount.color
+      })
       
     } catch (error) {
       console.error('获取 favorites 失败:', error)
-      setFavoriteData(null)
+      // 如果账户不存在，这是正常的
+      if (error instanceof Error && error.message.includes('Account does not exist')) {
+        console.log('Favorites 账户不存在')
+        setFavoriteData(null)
+      } else {
+        setFavoriteData(null)
+      }
     }
   }
 
@@ -133,16 +222,36 @@ export function Favorites() {
       const connection = getConnection()
       const programId = new PublicKey(FAVORITES_IDL.address)
       
+      // 创建简单的钱包适配器用于读取数据
+      const wallet = {
+        publicKey: new PublicKey('11111111111111111111111111111111'), // 虚拟公钥
+        signTransaction: async () => { throw new Error('读取数据不需要签名') },
+        signAllTransactions: async () => { throw new Error('读取数据不需要签名') },
+      } as any
+      
+      const provider = new AnchorProvider(connection, wallet, { commitment: 'confirmed' })
+      const program = new Program<Favorites>(FAVORITES_IDL as Favorites, provider)
+      
       const accounts = await connection.getProgramAccounts(programId)
       console.log('找到', accounts.length, '个 Favorites 账户')
       
-      const favorites = accounts.map((account, index) => ({
-        publicKey: account.pubkey.toBase58(),
-        data: {
-          number: 42 + index, // 模拟数据
-          color: ['red', 'blue', 'green'][index % 3] // 模拟数据
+      const favorites = []
+      
+      for (const account of accounts) {
+        try {
+          // 使用 Anchor 解码账户数据
+          const decodedData = program.coder.accounts.decode('favorites', account.account.data)
+          favorites.push({
+            publicKey: account.pubkey.toBase58(),
+            data: {
+              number: decodedData.number.toNumber(),
+              color: decodedData.color
+            }
+          })
+        } catch (decodeError) {
+          console.warn('无法解码账户数据:', account.pubkey.toBase58(), decodeError)
         }
-      }))
+      }
       
       setAllFavorites(favorites)
       
