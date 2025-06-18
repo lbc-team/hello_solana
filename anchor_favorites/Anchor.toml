@@ -1,4 +1,5 @@
 [toolchain]
+anchor_version = "0.31.1"
 
 [features]
 resolution = true
@@ -9,6 +10,7 @@ seeds = true
 anchor_favorites = "AfWzQDmP7gzMaiFPmwwQysvVTEuxPvKtDcUA5hfTwiwW"
 emit_log = "9FWbx4DBgnFpVRxvttPQ2RY8AWA57fgvnAqGjrcuBwt7"
 bank = "3A7uokk2LFPCMBJmCrn4ahErYicSpvktHEZnCmhVKY4m"
+tokenbank = "3wUr8uJzXTX6dT9PaHiM4sjgohfK1DUvRBGJaW7hBKF9"
 
 # IDL 注册表（Registry）配置
 [registry]
