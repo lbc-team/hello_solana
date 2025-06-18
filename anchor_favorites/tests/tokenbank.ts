@@ -10,7 +10,6 @@ import {
 } from "@solana/web3.js";
 import {
   TOKEN_PROGRAM_ID,
-  ASSOCIATED_TOKEN_PROGRAM_ID,
   createMint,
   createAccount,
   mintTo,
@@ -57,10 +56,10 @@ describe.only("tokenbank", () => {
       provider.connection,
       provider.wallet.payer,
       mintAuthority.publicKey,
-      null,
-      6,
-      undefined,
-      undefined,
+      null, // freezeAuthority: null - 禁用冻结功能
+      9, // decimals
+      undefined, // keypair: 让程序自动生成
+      {commitment: "confirmed"}, 
       TOKEN_PROGRAM_ID
     );
 
@@ -77,7 +76,7 @@ describe.only("tokenbank", () => {
       mint,
       bankPDA,
       bankTokenAccountKeypair,
-      undefined,
+      {commitment: "confirmed"}, 
       TOKEN_PROGRAM_ID
     );
 
@@ -87,7 +86,7 @@ describe.only("tokenbank", () => {
       provider.wallet.payer,
       mint,
       user.publicKey,
-      undefined,
+      {commitment: "confirmed"}, 
       TOKEN_PROGRAM_ID
     );
 
@@ -99,8 +98,8 @@ describe.only("tokenbank", () => {
       userTokenAccount,
       mintAuthority,
       1_000_000_000, // 1000 tokens
-      undefined,
-      undefined,
+      [], // multiSigners: 多重签名者（空数组表示无）
+      {commitment: "confirmed"}, 
       TOKEN_PROGRAM_ID
     );
 
@@ -155,7 +154,6 @@ describe.only("tokenbank", () => {
         tokenbankAta: bankTokenAccount,
         depositor: user.publicKey,
         tokenProgram: TOKEN_PROGRAM_ID,
-        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
       })
       .signers([user])
       .rpc();
@@ -164,7 +162,7 @@ describe.only("tokenbank", () => {
     const bankTokenAccountInfo = await getAccount(
       provider.connection,
       bankTokenAccount,
-      undefined,
+      "confirmed", 
       TOKEN_PROGRAM_ID
     );
 
@@ -183,7 +181,7 @@ describe.only("tokenbank", () => {
       await getAccount(
         provider.connection,
         userTokenAccount,
-        undefined,
+        "confirmed", 
         TOKEN_PROGRAM_ID
       )
     ).amount;
@@ -198,7 +196,6 @@ describe.only("tokenbank", () => {
         receiverAta: userTokenAccount,
         receiver: user.publicKey,
         tokenProgram: TOKEN_PROGRAM_ID,
-        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
       })
       .signers([user])
       .rpc();
@@ -207,7 +204,7 @@ describe.only("tokenbank", () => {
       await getAccount(
         provider.connection,
         userTokenAccount,
-        undefined,
+        "confirmed", 
         TOKEN_PROGRAM_ID
       )
     ).amount;
@@ -216,7 +213,7 @@ describe.only("tokenbank", () => {
     const bankTokenAccountInfo = await getAccount(
       provider.connection,
       bankTokenAccount,
-      undefined,
+      "confirmed", 
       TOKEN_PROGRAM_ID
     );
 
@@ -247,7 +244,6 @@ describe.only("tokenbank", () => {
         receiverAta: userTokenAccount,
         receiver: user.publicKey,
         tokenProgram: TOKEN_PROGRAM_ID,
-        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
       })
       .signers([user])
       .rpc();

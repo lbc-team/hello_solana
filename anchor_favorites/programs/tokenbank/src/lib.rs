@@ -1,7 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
     token::{self, Mint, Token, TokenAccount, Transfer},
-    associated_token::AssociatedToken,
 };
 
 declare_id!("DScDzC7XWcpLGyq2CMu8sPLfqE4Z1MDUqQRvieEYHZBa");
@@ -128,7 +127,6 @@ pub struct Deposit<'info> {
     pub tokenbank_ata: Account<'info, TokenAccount>,
     pub depositor: Signer<'info>,
     pub token_program: Program<'info, Token>,
-    pub associated_token_program: Program<'info, AssociatedToken>,
 }
 
 #[derive(Accounts)]
@@ -160,7 +158,6 @@ pub struct Withdraw<'info> {
     pub receiver_ata: Account<'info, TokenAccount>,
     pub receiver: Signer<'info>,
     pub token_program: Program<'info, Token>,
-    pub associated_token_program: Program<'info, AssociatedToken>,
 }
 
 #[derive(Accounts)]
