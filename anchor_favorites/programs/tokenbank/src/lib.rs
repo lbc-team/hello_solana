@@ -16,7 +16,6 @@ pub mod tokenbank {
     }
 
     pub fn create_user_account(ctx: Context<CreateUserAccount>) -> Result<()> {
-        ctx.accounts.user_account.owner = ctx.accounts.owner.key();
         ctx.accounts.user_account.deposit_amount = 0;
         Ok(())
     }
@@ -94,7 +93,7 @@ pub struct CreateUserAccount<'info> {
     #[account(
         init,
         payer = owner,
-        space = 8 + 32 + 8,
+        space = 8 + 8, // discriminator + deposit_amount
         seeds = [b"user", owner.key().as_ref()],
         bump
     )]
@@ -111,8 +110,7 @@ pub struct Deposit<'info> {
     #[account(
         mut,
         seeds = [b"user", depositor.key().as_ref()],
-        bump,
-        constraint = user_account.owner == depositor.key() @ TokenBankError::InvalidOwner
+        bump
     )]
     pub user_account: Account<'info, UserAccount>,
     pub mint: Account<'info, Mint>,
@@ -144,8 +142,7 @@ pub struct Withdraw<'info> {
     #[account(
         mut,
         seeds = [b"user", receiver.key().as_ref()],
-        bump,
-        constraint = user_account.owner == receiver.key() @ TokenBankError::InvalidOwner
+        bump
     )]
     pub user_account: Account<'info, UserAccount>,
     pub mint: Account<'info, Mint>,
@@ -172,8 +169,7 @@ pub struct CloseUserAccount<'info> {
         mut,
         close = owner,
         seeds = [b"user", owner.key().as_ref()],
-        bump,
-        constraint = user_account.owner == owner.key() @ TokenBankError::InvalidOwner
+        bump
     )]
     pub user_account: Account<'info, UserAccount>,
     #[account(mut)]
@@ -187,7 +183,6 @@ pub struct Bank {
 
 #[account]
 pub struct UserAccount {
-    pub owner: Pubkey,
     pub deposit_amount: u64,
 }
 
@@ -195,8 +190,6 @@ pub struct UserAccount {
 pub enum TokenBankError {
     #[msg("Insufficient funds")]
     InsufficientFunds,
-    #[msg("Invalid owner")]
-    InvalidOwner,
     #[msg("Account not empty")]
     AccountNotEmpty,
 }

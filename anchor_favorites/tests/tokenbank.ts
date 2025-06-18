@@ -130,7 +130,6 @@ describe.only("tokenbank", () => {
       .rpc();
 
     const userAccount = await program.account.userAccount.fetch(userPDA);
-    assert.equal(userAccount.owner.toBase58(), user.publicKey.toBase58());
     assert.equal(userAccount.depositAmount.toNumber(), 0);
   });
 
