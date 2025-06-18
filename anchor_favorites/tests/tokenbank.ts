@@ -43,7 +43,14 @@ describe.only("tokenbank", () => {
       user.publicKey,
       2 * LAMPORTS_PER_SOL // 2 SOL
     );
-    await provider.connection.confirmTransaction(signature);
+    
+
+    const blockhash = await provider.connection.getLatestBlockhash();
+    await provider.connection.confirmTransaction({
+      signature: signature,
+      blockhash: blockhash.blockhash,
+      lastValidBlockHeight: blockhash.lastValidBlockHeight
+    }, "confirmed");
 
     // 创建代币
     mint = await createMint(
