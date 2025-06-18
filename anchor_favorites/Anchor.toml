@@ -3,9 +3,12 @@
 [features]
 resolution = true
 skip-lint = false
+seeds = true
 
 [programs.localnet]
-anchor_favorites = "4Sq6MsHjGc71x4cCXXnpxqVErDptwCmrdJjZexrrnCVK"
+anchor_favorites = "AfWzQDmP7gzMaiFPmwwQysvVTEuxPvKtDcUA5hfTwiwW"
+emit_log = "9FWbx4DBgnFpVRxvttPQ2RY8AWA57fgvnAqGjrcuBwt7"
+bank = "3A7uokk2LFPCMBJmCrn4ahErYicSpvktHEZnCmhVKY4m"
 
 # IDL 注册表（Registry）配置
 [registry]
