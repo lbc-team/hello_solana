@@ -4,7 +4,7 @@ use anchor_spl::{
     associated_token::AssociatedToken,
 };
 
-declare_id!("3wUr8uJzXTX6dT9PaHiM4sjgohfK1DUvRBGJaW7hBKF9");
+declare_id!("DScDzC7XWcpLGyq2CMu8sPLfqE4Z1MDUqQRvieEYHZBa");
 
 #[program]
 pub mod tokenbank {
@@ -24,14 +24,13 @@ pub mod tokenbank {
         let transfer_ctx = CpiContext::new(
             ctx.accounts.token_program.to_account_info(),
             Transfer {
-                from: ctx.accounts.depositor_token.to_account_info(),
-                to: ctx.accounts.bank_token.to_account_info(),
+                from: ctx.accounts.depositor_ata.to_account_info(),
+                to: ctx.accounts.tokenbank_ata.to_account_info(),
                 authority: ctx.accounts.depositor.to_account_info(),
             },
         );
 
         token::transfer(transfer_ctx, amount)?;
-
         ctx.accounts.user_account.deposit_amount += amount;
 
         Ok(())
@@ -43,17 +42,18 @@ pub mod tokenbank {
             TokenBankError::InsufficientFunds
         );
 
+        // 使用 seeds 作为签名，确保只有银行账户可以提取资金
         let bank_seeds = &[b"bank".as_ref(), &[ctx.bumps.bank]];
         let signer = &[&bank_seeds[..]];
 
         let transfer_ctx = CpiContext::new_with_signer(
             ctx.accounts.token_program.to_account_info(),
             Transfer {
-                from: ctx.accounts.bank_token.to_account_info(),
-                to: ctx.accounts.receiver_token.to_account_info(),
+                from: ctx.accounts.tokenbank_ata.to_account_info(),
+                to: ctx.accounts.receiver_ata.to_account_info(),
                 authority: ctx.accounts.bank.to_account_info(),
             },
-            signer,
+            signer,  // 使用 seeds 作为 PDA 签名
         );
 
         token::transfer(transfer_ctx, amount)?;
@@ -119,13 +119,13 @@ pub struct Deposit<'info> {
         token::mint = mint,
         token::authority = depositor
     )]
-    pub depositor_token: Account<'info, TokenAccount>,
+    pub depositor_ata: Account<'info, TokenAccount>,
     #[account(
         mut,
         token::mint = mint,
         token::authority = bank
     )]
-    pub bank_token: Account<'info, TokenAccount>,
+    pub tokenbank_ata: Account<'info, TokenAccount>,
     pub depositor: Signer<'info>,
     pub token_program: Program<'info, Token>,
     pub associated_token_program: Program<'info, AssociatedToken>,
@@ -151,13 +151,13 @@ pub struct Withdraw<'info> {
         token::mint = mint,
         token::authority = bank
     )]
-    pub bank_token: Account<'info, TokenAccount>,
+    pub tokenbank_ata: Account<'info, TokenAccount>,
     #[account(
         mut,
         token::mint = mint,
         token::authority = receiver
     )]
-    pub receiver_token: Account<'info, TokenAccount>,
+    pub receiver_ata: Account<'info, TokenAccount>,
     pub receiver: Signer<'info>,
     pub token_program: Program<'info, Token>,
     pub associated_token_program: Program<'info, AssociatedToken>,

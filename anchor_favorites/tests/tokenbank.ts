@@ -18,11 +18,13 @@ import {
   getAssociatedTokenAddress,
   createAssociatedTokenAccount,
 } from "@solana/spl-token";
+// import { Tokenbank } from "../target/types/tokenbank";
 
 describe.only("tokenbank", () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
 
+  // const program = anchor.workspace.Tokenbank as Program<Tokenbank>;
   const program = anchor.workspace.tokenbank;
 
   let mint: PublicKey;
@@ -101,7 +103,7 @@ describe.only("tokenbank", () => {
     );
   });
 
-  it("初始化银行", async () => {
+  it("初始化TokenBank", async () => {
     await program.methods
       .initialize()
       .accounts({
@@ -142,8 +144,8 @@ describe.only("tokenbank", () => {
         bank: bankPDA,
         userAccount: userPDA,
         mint: mint,
-        depositorToken: userTokenAccount,
-        bankToken: bankTokenAccount,
+        depositorAta: userTokenAccount,
+        tokenbankAta: bankTokenAccount,
         depositor: user.publicKey,
         tokenProgram: TOKEN_PROGRAM_ID,
         associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -185,8 +187,8 @@ describe.only("tokenbank", () => {
         bank: bankPDA,
         userAccount: userPDA,
         mint: mint,
-        bankToken: bankTokenAccount,
-        receiverToken: userTokenAccount,
+        tokenbankAta: bankTokenAccount,
+        receiverAta: userTokenAccount,
         receiver: user.publicKey,
         tokenProgram: TOKEN_PROGRAM_ID,
         associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -234,8 +236,8 @@ describe.only("tokenbank", () => {
         bank: bankPDA,
         userAccount: userPDA,
         mint: mint,
-        bankToken: bankTokenAccount,
-        receiverToken: userTokenAccount,
+        tokenbankAta: bankTokenAccount,
+        receiverAta: userTokenAccount,
         receiver: user.publicKey,
         tokenProgram: TOKEN_PROGRAM_ID,
         associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
