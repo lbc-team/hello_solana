@@ -25,6 +25,7 @@ pub mod bank {
 
     pub fn deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
         // 转账 SOL 到银行账户
+        // CPI 调用系统程序
         system_program::transfer(
             CpiContext::new(
                 ctx.accounts.system_program.to_account_info(),
@@ -77,12 +78,13 @@ pub mod bank {
 
 #[derive(Accounts)]
 pub struct Initialize<'info> {
+    //  init 约束会自动阻止重复初始化
     #[account(
         init,
         payer = authority,
         space = 8 + 32, // discriminator + pubkey
         seeds = [b"bank"],
-        bump
+        bump,
     )]
     pub bank: Account<'info, Bank>,
     #[account(mut)]
@@ -155,8 +157,6 @@ pub struct UserAccount {
 
 #[error_code]
 pub enum BankError {
-    #[msg("未经授权的操作")]
-    UnauthorizedOperation,
     #[msg("用户余额不足")]
     InsufficientFunds,
     #[msg("银行资金不足")]

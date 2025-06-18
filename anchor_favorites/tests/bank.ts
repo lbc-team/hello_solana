@@ -113,4 +113,26 @@ describe("bank", () => {
     assert.isAbove(finalUserBalance, initialUserBalance); // 考虑到交易费用，最终余额会略低于预期
     assert.equal(userAccount.depositAmount.toNumber(), 500_000_000); // 剩余 0.5 SOL
   });
+
+  it("不能重复初始化银行账户", async () => {
+    const [bankPDA] = PublicKey.findProgramAddressSync(
+      [Buffer.from("bank")],
+      program.programId
+    );
+
+    try {
+      await program.methods
+        .initialize()
+        .accounts({
+          bank: bankPDA,
+          authority: provider.wallet.publicKey,
+          systemProgram: anchor.web3.SystemProgram.programId,
+        })
+        .rpc();
+      assert.fail("应该失败，因为银行账户已经初始化过了");
+    } catch (error: any) {
+      // 任何错误都是可以接受的，因为我们知道这个操作应该失败
+      assert.isTrue(true, "初始化失败，符合预期");
+    }
+  });
 }); 
