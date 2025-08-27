@@ -11,6 +11,7 @@ bank = "3A7uokk2LFPCMBJmCrn4ahErYicSpvktHEZnCmhVKY4m"
 emit_log = "GmLHkec7uKSM1ahLZvR7aiUvyzXxVTb8gZbaqdHj3kSH"
 tokenbank = "DScDzC7XWcpLGyq2CMu8sPLfqE4Z1MDUqQRvieEYHZBa"
 
+# IDL 注册
 [registry]
 url = "https://api.apr.dev"
 

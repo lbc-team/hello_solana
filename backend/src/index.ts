@@ -72,7 +72,7 @@ async function main() {
   const tx = await program.methods
     .setFavorites(new BN(43), "blue")
     .accountsPartial({
-      user: payer.publicKey,  
+      user: payer.publicKey,
       favorites: favoritesPda,
       systemProgram: SystemProgram.programId,
     })

@@ -19,7 +19,7 @@ import {
 } from "@solana/spl-token";
 // import { Tokenbank } from "../target/types/tokenbank";
 
-describe.only("tokenbank", () => {
+describe("tokenbank", () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
 

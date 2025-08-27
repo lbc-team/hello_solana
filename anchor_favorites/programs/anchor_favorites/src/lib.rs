@@ -93,7 +93,7 @@ mod tests {
     #[test]
     fn test_program_id() {
         // 测试程序 ID 是否正确设置
-        let expected_id = "HGq5ZAt1kDDHn4ZCK6tLcdnzbft5t7tFXZTvibNWYe6q";
+        let expected_id = "AfWzQDmP7gzMaiFPmwwQysvVTEuxPvKtDcUA5hfTwiwW";
         assert_eq!(crate::ID.to_string(), expected_id);
     }
 

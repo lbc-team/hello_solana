@@ -12,10 +12,12 @@ async function generateUserAndAirdropSol() {
       // 给用户账户空投 SOL
       const connection = anchor.getProvider().connection;
       const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+      
       const airdropSignature = await connection.requestAirdrop(
         user.publicKey,
         2 * anchor.web3.LAMPORTS_PER_SOL // 空投 2 SOL
       );
+      
       await connection.confirmTransaction({
         signature: airdropSignature,
         blockhash,
