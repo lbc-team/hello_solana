@@ -1,13 +1,18 @@
 import { Connection, PublicKey } from "@solana/web3.js";
 import * as fs from "fs";
 import bs58 from "bs58";
+import favoritesIdl from "./idl/favorites.json";
+import { getInstructionDiscriminatorFromIdl } from "./utils/discriminator";
 
 // Favorites 合约程序 ID
 const FAVORITES_PROGRAM_ID = new PublicKey("AfWzQDmP7gzMaiFPmwwQysvVTEuxPvKtDcUA5hfTwiwW");
 const RPC_ENDPOINT = "http://localhost:8899";
 
-// set_favorites 指令 discriminator
-const SET_FAVORITES_DISCRIMINATOR = Buffer.from([211, 137, 87, 135, 161, 224, 187, 120]);
+// 从 IDL 中获取 set_favorites 指令的 discriminator
+const SET_FAVORITES_DISCRIMINATOR = getInstructionDiscriminatorFromIdl(
+  favoritesIdl,
+  "set_favorites"
+);
 
 // 扫描间隔（毫秒）
 const SCAN_INTERVAL = 400; // 每 400ms 检查一次

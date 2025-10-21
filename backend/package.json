@@ -6,11 +6,11 @@
     "dev": "ts-node src/index.ts",
     "listen": "ts-node src/listen_favorites.ts",
     "transfer": "ts-node src/transfer.ts",
-    "measure-cu": "ts-node src/measure_cu.ts",
-    "scan-bank": "ts-node src/scan_bank_transfers.ts",
-    "scan-bank-v2": "ts-node src/scan_bank_v2.ts",
+    "measure_cu": "ts-node src/measure_cu.ts",
+    "scan_bank": "ts-node src/scan_bank.ts",
     "scan_favorites": "ts-node src/scan_favorites.ts",
     "bank_deposit": "ts-node src/bank_deposit.ts",
+    "example-discriminator": "ts-node src/examples/discriminator_example.ts",
     "build": "tsc"
   },
   "dependencies": {
