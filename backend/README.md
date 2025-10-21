@@ -15,4 +15,5 @@
 2. 运行脚本：
    * `pnpm dev` : 与Favorites 交互，获取相关账户数据
    * `pnpm listen` : 监听程序的变化，若数据更新快，需要推入到消息队列
+   * `pnpm scan_favorites`: 扫描所有调用 set_favorites 的交易， 启动后，再次运行 `pnpm dev`
 

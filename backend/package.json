@@ -7,6 +7,10 @@
     "listen": "ts-node src/listen_favorites.ts",
     "transfer": "ts-node src/transfer.ts",
     "measure-cu": "ts-node src/measure_cu.ts",
+    "scan-bank": "ts-node src/scan_bank_transfers.ts",
+    "scan-bank-v2": "ts-node src/scan_bank_v2.ts",
+    "scan_favorites": "ts-node src/scan_favorites.ts",
+    "bank_deposit": "ts-node src/bank_deposit.ts",
     "build": "tsc"
   },
   "dependencies": {
@@ -14,7 +18,9 @@
     "@solana/web3.js": "^1.92.1"
   },
   "devDependencies": {
-    "typescript": "^5.4.0",
-    "ts-node": "^10.9.2"
+    "@types/bs58": "^5.0.0",
+    "bs58": "^6.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.0"
   }
-} 
+}
