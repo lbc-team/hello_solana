@@ -4,7 +4,7 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "ts-node src/index.ts",
-    "listen": "ts-node src/listen_favorites.ts",
+    "listen_favorites": "ts-node src/listen_favorites.ts",
     "transfer_sol": "ts-node src/transfer_sol.ts",
     "measure_cu": "ts-node src/measure_cu.ts",
     "scan_bank": "ts-node src/scan_bank_v2.ts",

@@ -56,6 +56,9 @@ async function processSignature(
       const instruction = instructions[i];
       console.log(instruction);
 
+      // hex: d3895787a1e0bb782b0000000000000004000000626c7565
+      // base58: LHW7AG4w8ym8rq7uwSGAs8r6omyk98FJU
+
       // 检查是否是 Favorites 程序的指令
       if ("programId" in instruction && instruction.programId.equals(FAVORITES_PROGRAM_ID)) {
         if ("data" in instruction) {
@@ -64,6 +67,8 @@ async function processSignature(
             favoritesIdl as Favorites,
             instruction.data
           );
+
+          console.log("decoded:", decoded);
 
           if (!decoded) {
             console.log(`  ⚠️  无法解码指令`);

@@ -39,7 +39,7 @@ function demonstrateInstructionEncoding() {
   const paramsBuffer = Buffer.alloc(1024);
   let offset = 0;
   
-  // 编码 number (u64, 8字节, 小端序)
+  // 编码 number (u64, 8字节, 小端序: little-endian 低位字节在前，高位字节在后)
   paramsBuffer.writeBigUInt64LE(BigInt(args.number), offset);
   console.log(`   number (u64): ${args.number} → 8字节小端序`);
   console.log(`   number 字节: [${Array.from(paramsBuffer.slice(offset, offset + 8)).join(', ')}]`);
