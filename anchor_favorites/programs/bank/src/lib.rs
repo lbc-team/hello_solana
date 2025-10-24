@@ -63,6 +63,7 @@ pub mod bank {
             .lamports()
             .checked_sub(amount)
             .unwrap();
+
         **ctx.accounts.receiver.try_borrow_mut_lamports()? = ctx
             .accounts.receiver
             .lamports()
@@ -115,14 +116,17 @@ pub struct Deposit<'info> {
         bump
     )]
     pub bank: Account<'info, Bank>,
+
     #[account(
         mut,
         seeds = [b"user", depositor.key().as_ref()],
         bump
     )]
     pub user_account: Account<'info, UserAccount>,
+
     #[account(mut)]
     pub depositor: Signer<'info>,
+
     pub system_program: Program<'info, System>,
 }
 

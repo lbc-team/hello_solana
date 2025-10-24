@@ -119,6 +119,7 @@ pub struct Deposit<'info> {
         token::authority = depositor
     )]
     pub depositor_ata: Account<'info, TokenAccount>,
+
     #[account(
         mut,
         token::mint = mint,
@@ -137,6 +138,7 @@ pub struct Withdraw<'info> {
         bump
     )]
     pub bank: Account<'info, Bank>,
+
     #[account(
         mut,
         seeds = [b"user", receiver.key().as_ref()],
@@ -144,12 +146,14 @@ pub struct Withdraw<'info> {
     )]
     pub user_account: Account<'info, UserAccount>,
     pub mint: Account<'info, Mint>,
+    
     #[account(
         mut,
         token::mint = mint,
         token::authority = bank
     )]
     pub tokenbank_ata: Account<'info, TokenAccount>,
+
     #[account(
         mut,
         token::mint = mint,

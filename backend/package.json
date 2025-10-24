@@ -11,6 +11,7 @@
     "scan_favorites_with_coder": "ts-node src/scan_favorites_with_coder.ts",
     "scan_favorites": "ts-node src/scan_favorites.ts",
     "bank_deposit": "ts-node src/bank_deposit.ts",
+    "keypair_to_base58": "ts-node src/keypair_to_base58.ts",
     "example-discriminator": "ts-node src/examples/discriminator_example.ts",
     "example-decoder": "ts-node src/examples/decoder_comparison.ts",
     "build": "tsc"

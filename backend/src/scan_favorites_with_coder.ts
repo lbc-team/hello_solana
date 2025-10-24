@@ -54,6 +54,7 @@ async function processSignature(
     // 遍历所有主指令
     for (let i = 0; i < instructions.length; i++) {
       const instruction = instructions[i];
+      console.log(instruction);
 
       // 检查是否是 Favorites 程序的指令
       if ("programId" in instruction && instruction.programId.equals(FAVORITES_PROGRAM_ID)) {
@@ -72,7 +73,6 @@ async function processSignature(
           // 检查是否是 set_favorites 指令
           if (decoded.instructionName === "set_favorites") {
             console.log(`\n✅ 发现 SET_FAVORITES 指令！`);
-            console.log(`  指令索引: ${i}`);
             console.log(`  解码方式: Anchor BorshInstructionCoder`);
 
             // 🎉 自动解码的参数，类型安全！
@@ -120,11 +120,8 @@ async function continuousScan(): Promise<void> {
   const connection = new Connection(RPC_ENDPOINT, "confirmed");
   const allRecords: SetFavoritesRecord[] = [];
 
-  console.log("🚀 启动 Favorites 合约 set_favorites 实时监控 (使用 Anchor Coder)...");
-  console.log(`RPC 端点: ${RPC_ENDPOINT}`);
+  console.log("🚀  扫描 set_favorites 调用 ...");
   console.log(`Favorites 程序 ID: ${FAVORITES_PROGRAM_ID.toBase58()}`);
-  console.log(`扫描间隔: ${SCAN_INTERVAL}ms`);
-  console.log(`✨ 使用 Anchor BorshInstructionCoder 自动解码\n`);
 
   // 设置优雅退出处理
   let isRunning = true;
@@ -208,13 +205,6 @@ async function continuousScan(): Promise<void> {
       console.error("\n扫描过程中出错:", error);
       await new Promise(resolve => setTimeout(resolve, SCAN_INTERVAL));
     }
-  }
-
-  // 保存结果
-  if (allRecords.length > 0) {
-    const outputFile = `favorites_records_v3_${Date.now()}.json`;
-    fs.writeFileSync(outputFile, JSON.stringify(allRecords, null, 2));
-    console.log(`\n✅ 结果已保存到: ${outputFile}`);
   }
 
   console.log("\n=== 扫描已停止 ===");

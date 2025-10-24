@@ -30,6 +30,14 @@ interface SetFavoritesRecord {
 // 全局变量用于统计
 let totalRecords = 0;
 
+/**
+完整指令数据 (24字节):
+[211, 137, 87, 135, 161, 224, 187, 120, 42, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 98, 108, 117, 101]
+│─────────────────────────────────────────────────────────────────────────────────────────────────│
+│  Discriminator (8字节)  │  number (8字节)  │  color长度 (4字节)  │  color内容 (4字节)  │
+字节数组转换为 Base58 字符串用于网络传输
+*/
+
 // 解析 set_favorites 指令数据
 function parseSetFavoritesData(data: Buffer): { number: bigint; color: string } | null {
   try {
