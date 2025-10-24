@@ -16,6 +16,7 @@ import {
   
 
     const payer1 = Keypair.fromSecretKey(Buffer.from(JSON.parse(fs.readFileSync(PAYER_KEYPAIR_PATH, "utf8"))));
+    console.log("payer1 publicKey:", payer1.publicKey.toBase58());
     const payer2 = Keypair.generate();
   
     const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
