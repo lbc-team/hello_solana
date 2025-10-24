@@ -137,65 +137,52 @@ async function continuousScan(): Promise<void> {
     { limit: 1 }
   );
 
-  let lastProcessedSignature: string | undefined =
+  let untilSignature: string | undefined =
     initialSignatures.length > 0 ? initialSignatures[0].signature : undefined;
 
-  if (lastProcessedSignature) {
-    console.log(`✅ 从当前位置开始监控 (最新交易: ${lastProcessedSignature.slice(0, 8)}...)`);
+  if (untilSignature) {
+    console.log(`✅ 从当前位置开始监控 (最新交易: ${untilSignature.slice(0, 8)}...)`);
   } else {
     console.log(`✅ 开始监控 (暂无历史交易)`);
   }
   console.log(`\n开始监控新的 Favorites 交易...\n`);
 
-  // 已处理的签名集合
-  const processedSignatures = new Set<string>();
-  if (lastProcessedSignature) {
-    processedSignatures.add(lastProcessedSignature);
-  }
-
   // 持续扫描
   while (isRunning) {
     try {
-      // 获取最新的交易
+      // 获取最新的交易，使用 until 参数避免重复处理
       const signatures = await connection.getSignaturesForAddress(
         FAVORITES_PROGRAM_ID,
-        { limit: 10 }
+        {
+          limit: 10,
+          until: untilSignature // 返回
+        }
       );
 
       if (signatures.length > 0) {
-        // 过滤出新的交易
-        const newSignatures = signatures.filter(
-          sig => !processedSignatures.has(sig.signature)
-        );
+        console.log(`\n检测到 ${signatures.length} 个新交易`);
 
-        if (newSignatures.length > 0) {
-          console.log(`\n检测到 ${newSignatures.length} 个新交易`);
+        // 反向处理（从旧到新）
+        for (let i = signatures.length - 1; i >= 0; i--) {
+          const sig = signatures[i];
 
-          // 反向处理（从旧到新）
-          for (let i = newSignatures.length - 1; i >= 0; i--) {
-            const sig = newSignatures[i];
+          const records = await processSignature(
+            connection,
+            sig.signature,
+            sig.slot
+          );
+          allRecords.push(...records);
+        }
 
-            const records = await processSignature(
-              connection,
-              sig.signature,
-              sig.slot
-            );
-            allRecords.push(...records);
+        // 更新 until 为最新的签名，下次扫描将只获取比这个更新的交易
+        untilSignature = signatures[0].signature;
 
-            // 标记为已处理
-            processedSignatures.add(sig.signature);
-          }
-
-          // 打印当前统计
-          if (totalRecords > 0) {
-            console.log(`\n📊 当前统计: 总计 ${totalRecords} 次 set_favorites 调用`);
-          }
-        } else {
-          // 没有新交易，等待
-          process.stdout.write(`\r⏳ 等待新交易...`);
+        // 打印当前统计
+        if (totalRecords > 0) {
+          console.log(`\n📊 当前统计: 总计 ${totalRecords} 次 set_favorites 调用`);
         }
       } else {
-        // 没有任何交易
+        // 没有新交易，等待
         process.stdout.write(`\r⏳ 等待新交易...`);
       }
 
