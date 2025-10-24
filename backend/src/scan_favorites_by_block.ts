@@ -9,7 +9,6 @@ import { Connection, PublicKey } from "@solana/web3.js";
 import favoritesIdl from "./idl/favorites.json";
 import { Favorites } from "./types/favorites";
 import { decodeInstruction } from "./utils/instruction_decoder";
-import bs58 from "bs58";
 
 // Favorites 合约程序 ID
 const FAVORITES_PROGRAM_ID = new PublicKey("AfWzQDmP7gzMaiFPmwwQysvVTEuxPvKtDcUA5hfTwiwW");
@@ -65,56 +64,80 @@ async function processBlock(
       // 获取账户键 - 使用 getAccountKeys() 方法处理版本化交易
       const accountKeys = message.getAccountKeys();
 
-      // 获取编译后的指令（处理版本化消息的不同结构）
-      // @ts-ignore - VersionedMessage 可能是 MessageV0 或 Message，都有 compiledInstructions
+      //  使用 `getBlock` 获取区块数据时，返回的是原始的 `compiledInstructions` 格式，而不是像 `getParsedTransaction` 那样返回已解析的 `instructions` 格式
+      /**
+      ### CompiledInstruction 格式
+      ```typescript
+      {
+        programIdIndex: number,         // programId 在 accountKeys 中的索引
+        accountKeyIndexes: number[],    // 账户在 accountKeys 中的索引数组
+        data: Uint8Array                // 原始字节数组
+      }
+      ```
+      
+      ### Parsed Instruction 格式
+      ```typescript
+      {
+        programId: PublicKey,           // 已解析的 PublicKey 对象
+        accounts: PublicKey[],          // 已解析的账户数组
+        data: string                    // base58 编码的数据字符串
+      }
+      ```
+     */
       const compiledInstructions = message.compiledInstructions ?? [];
 
-      // 处理主指令
-      for (let i = 0; i < compiledInstructions.length; i++) {
-        const instruction = compiledInstructions[i];
-        const programId = accountKeys.get(instruction.programIdIndex);
+      // 将 compiledInstructions 转换为 parsed instructions 格式（仅转换地址，保留原始 data）
+      const instructions = compiledInstructions.map((ix: any) => {
+        const programId = accountKeys.get(ix.programIdIndex);
+        const accounts = ix.accountKeyIndexes.map((idx: number) => accountKeys.get(idx));
+        // data 保持 Buffer 格式，直接使用
+        return { programId, accounts, data: ix.data };
+      });
 
-        // 检查是否是 Favorites 程序
-        if (programId && programId.equals(FAVORITES_PROGRAM_ID)) {
-          // 将 Uint8Array 转换为 Buffer 进行解码
-          const instructionData = Buffer.from(instruction.data);
+      // 处理主指令（使用和 scan_favorites_with_coder.ts 相同的方式）
+      for (let i = 0; i < instructions.length; i++) {
+        const instruction = instructions[i];
 
-          // 解码指令数据
-          const decoded = decodeInstruction(
-            favoritesIdl as Favorites,
-            instructionData
-          );
+        // 检查是否是 Favorites 程序的指令
+        if ("programId" in instruction && instruction.programId && instruction.programId.equals(FAVORITES_PROGRAM_ID)) {
+          if ("data" in instruction) {
+            // 直接使用 Buffer 格式的 data 解码，不需要 base58 转换
+            const decoded = decodeInstruction(
+              favoritesIdl as Favorites,
+              instruction.data
+            );
 
-          if (decoded && decoded.instructionName === "set_favorites") {
-            const { number, color } = decoded.data;
+            if (decoded && decoded.instructionName === "set_favorites") {
+              const { number, color } = decoded.data;
 
-            // 获取账户信息
-            const accountIndices = instruction.accountKeyIndexes;
-            const user = accountIndices.length > 0 ? (accountKeys.get(accountIndices[0])?.toBase58() ?? "Unknown") : "Unknown";
-            const favorites = accountIndices.length > 1 ? (accountKeys.get(accountIndices[1])?.toBase58() ?? "Unknown") : "Unknown";
+              // 获取账户信息
+              const accounts = instruction.accounts;
+              const user = accounts.length > 0 ? accounts[0]?.toBase58() ?? "Unknown" : "Unknown";
+              const favorites = accounts.length > 1 ? accounts[1]?.toBase58() ?? "Unknown" : "Unknown";
 
-            const record: SetFavoritesRecord = {
-              slot,
-              signature,
-              user,
-              favorites,
-              number: number.toString(),
-              color: color,
-              timestamp: block.blockTime ?? null,
-              isInnerInstruction: false,
-            };
+              const record: SetFavoritesRecord = {
+                slot,
+                signature,
+                user,
+                favorites,
+                number: number.toString(),
+                color: color,
+                timestamp: block.blockTime ?? null,
+                isInnerInstruction: false,
+              };
 
-            records.push(record);
-            totalRecords++;
+              records.push(record);
+              totalRecords++;
 
-            // 打印记录
-            console.log(`\n✅ 发现 SET_FAVORITES 指令！`);
-            console.log(`  区块: ${slot}`);
-            console.log(`  交易签名: ${signature}`);
-            console.log(`  用户: ${user}`);
-            console.log(`  Favorites PDA: ${favorites}`);
-            console.log(`  Number: ${number.toString()} Color: ${color}`);
-            console.log(`  时间: ${block.blockTime ? new Date(block.blockTime * 1000).toISOString() : "N/A"}`);
+              // 打印记录
+              console.log(`\n✅ 发现 SET_FAVORITES 指令！`);
+              console.log(`  区块: ${slot}`);
+              console.log(`  交易签名: ${signature}`);
+              console.log(`  用户: ${user}`);
+              console.log(`  Favorites PDA: ${favorites}`);
+              console.log(`  Number: ${number.toString()} Color: ${color}`);
+              console.log(`  时间: ${block.blockTime ? new Date(block.blockTime * 1000).toISOString() : "N/A"}`);
+            }
           }
         }
       }
@@ -122,28 +145,30 @@ async function processBlock(
       // 处理内部指令（inner instructions）
       if (tx.meta.innerInstructions) {
         for (const innerInstructionSet of tx.meta.innerInstructions) {
-          for (const innerInstruction of innerInstructionSet.instructions) {
-            const programIdIndex = innerInstruction.programIdIndex;
-            const innerProgramId = accountKeys.get(programIdIndex);
+          // 将内部指令也转换为 parsed 格式
+          const parsedInnerInstructions = innerInstructionSet.instructions.map((ix: any) => {
+            const programId = accountKeys.get(ix.programIdIndex);
+            const accounts = ix.accounts.map((idx: number) => accountKeys.get(idx));
+            // 内部指令的 data 已经是 base58 字符串格式
+            return { programId, accounts, data: ix.data };
+          });
 
+          for (const innerInstruction of parsedInnerInstructions) {
             // 检查是否是 Favorites 程序
-            if (innerProgramId && innerProgramId.equals(FAVORITES_PROGRAM_ID)) {
-              // 将 Uint8Array 转换为 Buffer 进行解码
-              const innerInstructionData = Buffer.from(bs58.decode(innerInstruction.data));
-
+            if (innerInstruction.programId && innerInstruction.programId.equals(FAVORITES_PROGRAM_ID)) {
               // 解码指令数据
               const decoded = decodeInstruction(
                 favoritesIdl as Favorites,
-                innerInstructionData
+                innerInstruction.data
               );
 
               if (decoded && decoded.instructionName === "set_favorites") {
                 const { number, color } = decoded.data;
 
                 // 获取账户信息
-                const innerAccountIndices = innerInstruction.accounts;
-                const user = innerAccountIndices.length > 0 ? (accountKeys.get(innerAccountIndices[0])?.toBase58() ?? "Unknown") : "Unknown";
-                const favorites = innerAccountIndices.length > 1 ? (accountKeys.get(innerAccountIndices[1])?.toBase58() ?? "Unknown") : "Unknown";
+                const accounts = innerInstruction.accounts;
+                const user = accounts.length > 0 ? accounts[0]?.toBase58() ?? "Unknown" : "Unknown";
+                const favorites = accounts.length > 1 ? accounts[1]?.toBase58() ?? "Unknown" : "Unknown";
 
                 const record: SetFavoritesRecord = {
                   slot,
