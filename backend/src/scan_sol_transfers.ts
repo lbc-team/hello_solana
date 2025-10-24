@@ -1,13 +1,13 @@
 /**
  * SOL 转账记录扫描器
  *
- * 监听指定账号的所有 SOL 转账记录
+ * 使用解析指令的方式监听指定账号的所有 SOL 转账记录
  */
 
-import { Connection, PublicKey } from "@solana/web3.js";
+import { Connection, PublicKey, SystemProgram } from "@solana/web3.js";
 
 const RPC_ENDPOINT = "http://localhost:8899";
-// 要监听的地址 
+// 要监听的地址
 const MONITOR_ADDRESS = new PublicKey("iBSaRRAARcM6UJnFuuMXRJHEfjXXe7qXfp7prvxyWpz");
 
 interface TransferRecord {
@@ -19,92 +19,135 @@ interface TransferRecord {
   to: string;
   amountSOL: string;
   status: "success" | "failed";
+  instructionType: string;
 }
 
 async function processTransaction(
   connection: Connection,
   signature: string,
   publicKey: PublicKey
-): Promise<TransferRecord | null> {
+): Promise<TransferRecord[]> {
+  const records: TransferRecord[] = [];
+
   try {
-    // 获取交易详情
+    // 获取解析后的交易详情
     const tx = await connection.getParsedTransaction(signature, {
       maxSupportedTransactionVersion: 0,
     });
 
     if (!tx || !tx.meta) {
-      return null;
+      return records;
     }
 
     const status = tx.meta.err ? "failed" : "success";
+    const message = tx.transaction.message;
+    const instructions = message.instructions;
 
-    // 解析账户余额变化
-    const preBalances = tx.meta.preBalances;
-    const postBalances = tx.meta.postBalances;
-    const accountKeys = tx.transaction.message.accountKeys;
+    // 遍历所有指令（包括主指令和内部指令）
+    for (const instruction of instructions) {
+      console.log(instruction);
+      // 检查是否是解析后的指令
+      if ("parsed" in instruction) {
+        const parsed = instruction.parsed;
 
-    // 查找目标账号的索引
-    let targetIndex = -1;
-    for (let i = 0; i < accountKeys.length; i++) {
-      const key = accountKeys[i];
-      if ("pubkey" in key && key.pubkey.equals(publicKey)) {
-        targetIndex = i;
-        break;
-      }
-    }
-
-    if (targetIndex === -1) {
-      return null;
-    }
-
-    // 计算余额变化
-    const preBalance = preBalances[targetIndex];
-    const postBalance = postBalances[targetIndex];
-    const balanceChange = postBalance - preBalance;
-
-    // 如果余额有变化
-    if (balanceChange !== 0 && Math.abs(balanceChange) > tx.meta.fee) {
-      // 查找转账的对方账户
-      let otherPartyAddress = "Unknown";
-
-      for (let i = 0; i < accountKeys.length; i++) {
-        if (i === targetIndex) continue;
-
-        const otherPreBalance = preBalances[i];
-        const otherPostBalance = postBalances[i];
-        const otherBalanceChange = otherPostBalance - otherPreBalance;
-
+        // 检查是否是 System Program 的转账指令
         if (
-          (balanceChange > 0 && otherBalanceChange < 0) ||
-          (balanceChange < 0 && otherBalanceChange > 0)
+          instruction.programId.equals(SystemProgram.programId) &&
+          parsed.type === "transfer"
         ) {
-          const key = accountKeys[i];
-          if ("pubkey" in key) {
-            otherPartyAddress = key.pubkey.toBase58();
-            break;
+          const info = parsed.info;
+          const from = info.source;
+          const to = info.destination;
+          const lamports = info.lamports;
+
+          // 检查转账是否涉及监听的地址
+          if (from === publicKey.toBase58() || to === publicKey.toBase58()) {
+            const type = from === publicKey.toBase58() ? "send" : "receive";
+
+            records.push({
+              slot: tx.slot,
+              signature,
+              blockTime: tx.blockTime ?? null,
+              type,
+              from,
+              to,
+              amountSOL: (lamports / 1e9).toFixed(9),
+              status,
+              instructionType: "transfer",
+            });
+          }
+        }
+        // 也可以检测其他类型，如 transferWithSeed, allocate, createAccount 等
+        else if (
+          instruction.programId.equals(SystemProgram.programId) &&
+          (parsed.type === "createAccount" || parsed.type === "createAccountWithSeed")
+        ) {
+          const info = parsed.info;
+          const from = info.source;
+          const to = info.newAccount;
+          const lamports = info.lamports;
+
+          // 检查是否涉及监听的地址
+          if (from === publicKey.toBase58() || to === publicKey.toBase58()) {
+            const type = from === publicKey.toBase58() ? "send" : "receive";
+
+            records.push({
+              slot: tx.slot,
+              signature,
+              blockTime: tx.blockTime ?? null,
+              type,
+              from,
+              to,
+              amountSOL: (lamports / 1e9).toFixed(9),
+              status,
+              instructionType: parsed.type,
+            });
           }
         }
       }
+    }
 
-      const type = balanceChange > 0 ? "receive" : "send";
-      const amount = Math.abs(balanceChange);
+    // 也处理内部指令（inner instructions）
+    if (tx.meta.innerInstructions) {
+      for (const innerInstructionSet of tx.meta.innerInstructions) {
+        for (const instruction of innerInstructionSet.instructions) {
+          if ("parsed" in instruction) {
+            const parsed = instruction.parsed;
 
-      return {
-        slot: tx.slot,
-        signature,
-        blockTime: tx.blockTime ?? null,
-        type,
-        from: type === "send" ? publicKey.toBase58() : otherPartyAddress,
-        to: type === "send" ? otherPartyAddress : publicKey.toBase58(),
-        amountSOL: (amount / 1e9).toFixed(9),
-        status,
-      };
+            if (
+              instruction.programId.equals(SystemProgram.programId) &&
+              parsed.type === "transfer"
+            ) {
+              const info = parsed.info;
+              const from = info.source;
+              const to = info.destination;
+              const lamports = info.lamports;
+
+              if (from === publicKey.toBase58() || to === publicKey.toBase58()) {
+                const type = from === publicKey.toBase58() ? "send" : "receive";
+
+                records.push({
+                  slot: tx.slot,
+                  signature,
+                  blockTime: tx.blockTime ?? null,
+                  type,
+                  from,
+                  to,
+                  amountSOL: (lamports / 1e9).toFixed(9),
+                  status,
+                  instructionType: "transfer (inner)",
+                });
+              }
+            }
+          }
+        }
+      }
     }
   } catch (error) {
     console.error(`处理交易 ${signature} 时出错:`, error);
   }
 
-  return null;
+  return records;
 }
 
 async function continuousScan(): Promise<void> {
@@ -156,19 +199,21 @@ async function continuousScan(): Promise<void> {
         for (let i = signatures.length - 1; i >= 0; i--) {
           const sig = signatures[i];
 
-          const record = await processTransaction(
+          const txRecords = await processTransaction(
             connection,
             sig.signature,
             MONITOR_ADDRESS
           );
 
-          if (record) {
+          // 一个交易可能包含多个转账指令
+          for (const record of txRecords) {
             // 打印转账记录
             const emoji = record.type === "send" ? "📤" : "📥";
             const statusEmoji = record.status === "success" ? "✅" : "❌";
             const otherParty = record.type === "send" ? record.to : record.from;
 
             console.log(`\n${emoji} ${statusEmoji} ${record.type.toUpperCase()} 转账`);
+            console.log(`  指令类型: ${record.instructionType}`);
             console.log(`  金额: ${record.amountSOL} SOL`);
             console.log(`  ${record.type === "send" ? "接收方" : "发送方"}: ${otherParty}`);
             console.log(`  签名: ${record.signature}`);
