@@ -156,10 +156,11 @@ async function continuousScan(): Promise<void> {
   while (isRunning) {
     try {
       // 获取最新的交易，使用 until 参数避免重复处理
+
       const signatures = await connection.getSignaturesForAddress(
         FAVORITES_PROGRAM_ID,
         {
-          limit: 10,
+          limit: 1000,
           until: untilSignature // 返回
         }
       );

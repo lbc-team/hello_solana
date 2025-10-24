@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "ts-node src/index.ts",
     "listen_favorites": "ts-node src/listen_favorites.ts",
-    "transfer_sol": "ts-node src/transfer_sol.ts",
+    
     "measure_cu": "ts-node src/measure_cu.ts",
     "scan_bank": "ts-node src/scan_bank_v2.ts",
     "get_all_favorites_pdas": "ts-node src/get_all_favorites_pdas.ts",
@@ -17,6 +17,7 @@
     "example-discriminator": "ts-node src/examples/discriminator_example.ts",
     "example-decoder": "ts-node src/examples/decoder_comparison.ts",
     "scan_sol_transfers": "ts-node src/scan_sol_transfers.ts",
+    "transfer_sol": "ts-node src/transfer_sol.ts",
     "build": "tsc"
   },
   "dependencies": {
