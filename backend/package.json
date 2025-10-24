@@ -8,8 +8,10 @@
     "transfer_sol": "ts-node src/transfer_sol.ts",
     "measure_cu": "ts-node src/measure_cu.ts",
     "scan_bank": "ts-node src/scan_bank_v2.ts",
+    "get_all_favorites_pdas": "ts-node src/get_all_favorites_pdas.ts",
     "scan_favorites_with_coder": "ts-node src/scan_favorites_with_coder.ts",
     "scan_favorites": "ts-node src/scan_favorites.ts",
+    "scan_favorites_by_block": "ts-node src/scan_favorites_by_block.ts",
     "bank_deposit": "ts-node src/bank_deposit.ts",
     "keypair_to_base58": "ts-node src/keypair_to_base58.ts",
     "example-discriminator": "ts-node src/examples/discriminator_example.ts",
@@ -19,6 +21,7 @@
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.31.1",
+    "@coral-xyz/borsh": "^0.32.1",
     "@solana/web3.js": "^1.92.1"
   },
   "devDependencies": {
