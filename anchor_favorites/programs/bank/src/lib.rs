@@ -151,7 +151,7 @@ pub struct Withdraw<'info> {
 
 #[account]
 pub struct Bank {
-    pub authority: Pubkey,
+    pub authority: Pubkey,  // 未使用， 预留
 }
 
 #[account]

@@ -104,8 +104,12 @@ pub struct CreateUserAccount<'info> {
 
 #[derive(Accounts)]
 pub struct Deposit<'info> {
-    #[account(mut)]
+    #[account(mut,
+        seeds = [b"bank"],  // 添加这个约束
+        bump,
+    )]
     pub bank: Account<'info, Bank>,
+
     #[account(
         mut,
         seeds = [b"user", depositor.key().as_ref()],

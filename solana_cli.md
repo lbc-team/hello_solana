@@ -28,7 +28,7 @@ solana config get
 solana config set --url devnet 
 solana config set --url $DEVNET_RPC
 solana config set --url localhost 
-solana config set  --url mainnet-beta
+solana config set --url mainnet-beta
 ```
 
 devnet 可使用 https://www.helius.dev/ 节点服务
@@ -61,19 +61,20 @@ solana transfer --from ~/.config/solana/id.json 8gwAbvN8t7n7PoTqWhuqPJ7s4Vgov1YN
 
 ## SPL Token
 
+生成靓号 mint Token address
 ```
-solana-keygen grind --starts-with usd:1
-usdrxLChKFKAnztF9SHEKPUGNx6tvD97air6ebAKmKb
+solana-keygen grind --starts-with usd:1 
 ```
 
 **创建Token**
 ```
 spl-token create-token
-spl-token create-token --decimals 6 keypair.json 
+spl-token create-token --decimals 6 mint_keypair.json 
+spl-token create-token --decimals 6 keypair.json --url http://127.0.0.1:8899
 ```
 
-其实是创建 mint 账户，  mint 保存：
-decimals: 小数位数 
+其实是创建 mint 账户，mint 保存：
+decimals: 小数位数
 supply：当前总供应量
 mint_authority: 铸造权限， 谁可以发行 token 
 freeze_authority: 冻结权限：冻结或解冻某个账户的 Token， 防止该账户进行转账或接收 Token。
@@ -97,7 +98,7 @@ spl-token create-account --owner 4cAawauobWYMVr76d8KvrMwbzL2qgg5AWaGfuVv1NH3F us
 
 spl-token create-account --owner 4sergQ8dw8CSveBQ9v7datW2gHkPbaah9SsztmoEhsib usdrxLChKFKAnztF9SHEKPUGNx6tvD97air6ebAKmKb --fee-payer /Users/emmett/.config/solana/id.json
 
-spl-token mint  <mint account> <TOKEN_AMOUNT>：发行
+spl-token mint  <mint account> <TOKEN_AMOUNT> ATA：发行
 
 给指定地址发行
 spl-token mint usdrxLChKFKAnztF9SHEKPUGNx6tvD97air6ebAKmKb 8 D4J7WWnxKXR6ZSwbd5jjdrW89MFPtEUJVQ5cJfX4Athq
