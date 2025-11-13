@@ -3,19 +3,13 @@ use anchor_lang::system_program;
 
 declare_id!("3A7uokk2LFPCMBJmCrn4ahErYicSpvktHEZnCmhVKY4m");
 
-// 用户存入（deposit 指令）Bank 账户， Bank记录着所有Sol存款
-// 用户从银行账户提取资金（withdraw 指令） 
-// UserAccount 账户 记录记录着用户存款的金额
+// Bank 是一个空的 PDA（由 System Program 拥有），仅用于存储 SOL
+// 使用 system_program::transfer 进行存取款操作
+// UserAccount 记录每个用户的存款金额
 
 #[program]
 pub mod bank {
     use super::*;
-
-    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
-        let bank = &mut ctx.accounts.bank;
-        bank.authority = ctx.accounts.authority.key();
-        Ok(())
-    }
 
     pub fn create_user_account(ctx: Context<CreateUserAccount>) -> Result<()> {
         let user_account = &mut ctx.accounts.user_account;
@@ -24,8 +18,11 @@ pub mod bank {
     }
 
     pub fn deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
-        // 转账 SOL 到银行账户
-        // CPI 调用系统程序
+        // 使用 system_program::transfer 从用户转账到 bank PDA
+        // System Program 检测到目标账户不存在，自动创建：
+        // - Owner: System Program (11111...1111)
+        // - Lamports: amount
+        // - Data: []
         system_program::transfer(
             CpiContext::new(
                 ctx.accounts.system_program.to_account_info(),
@@ -38,7 +35,12 @@ pub mod bank {
         )?;
 
         // 更新用户存款记录
-        ctx.accounts.user_account.deposit_amount = ctx.accounts.user_account.deposit_amount.checked_add(amount).unwrap();
+        ctx.accounts.user_account.deposit_amount = ctx
+            .accounts
+            .user_account
+            .deposit_amount
+            .checked_add(amount)
+            .unwrap();
 
         Ok(())
     }
@@ -50,47 +52,37 @@ pub mod bank {
             BankError::InsufficientFunds
         );
 
-        // 确保银行账户有足够的余额
-        require!(
-            ctx.accounts.bank.to_account_info().lamports() >= amount,
-            BankError::InsufficientBankFunds
-        );
+        // 确保 bank 账户有足够的余额
+        let bank_lamports = ctx.accounts.bank.lamports();
+        require!(bank_lamports >= amount, BankError::InsufficientBankFunds);
 
-        // 从银行账户转账 SOL 到接收者
-        **ctx.accounts.bank.to_account_info().try_borrow_mut_lamports()? = ctx
-            .accounts.bank
-            .to_account_info()
-            .lamports()
+        // 使用 system_program::transfer 配合 PDA seeds 签名进行转账
+        // 这是推荐的做法
+        let seeds = &[b"bank".as_ref(), &[ctx.bumps.bank]];
+        let signer_seeds = &[&seeds[..]];
+
+        system_program::transfer(
+            CpiContext::new_with_signer(
+                ctx.accounts.system_program.to_account_info(),
+                system_program::Transfer {
+                    from: ctx.accounts.bank.to_account_info(),
+                    to: ctx.accounts.receiver.to_account_info(),
+                },
+                signer_seeds,
+            ),
+            amount,
+        )?;
+
+        // 更新用户存款记录
+        ctx.accounts.user_account.deposit_amount = ctx
+            .accounts
+            .user_account
+            .deposit_amount
             .checked_sub(amount)
             .unwrap();
 
-        **ctx.accounts.receiver.try_borrow_mut_lamports()? = ctx
-            .accounts.receiver
-            .lamports()
-            .checked_add(amount)
-            .unwrap();
-
-        // 更新用户存款记录
-        ctx.accounts.user_account.deposit_amount = ctx.accounts.user_account.deposit_amount.checked_sub(amount).unwrap();
-
         Ok(())
     }
-}
-
-#[derive(Accounts)]
-pub struct Initialize<'info> {
-    //  init 约束会自动阻止重复初始化
-    #[account(
-        init,
-        payer = authority,
-        space = 8 + 32, // discriminator + pubkey
-        seeds = [b"bank"],
-        bump,
-    )]
-    pub bank: Account<'info, Bank>,
-    #[account(mut)]
-    pub authority: Signer<'info>,
-    pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
@@ -110,12 +102,13 @@ pub struct CreateUserAccount<'info> {
 
 #[derive(Accounts)]
 pub struct Deposit<'info> {
+    /// CHECK: Bank 是一个空的 PDA，由 System Program 拥有，在transfer时自动创建, 仅用于存储 SOL
     #[account(
         mut,
         seeds = [b"bank"],
         bump
     )]
-    pub bank: Account<'info, Bank>,
+    pub bank: AccountInfo<'info>,
 
     #[account(
         mut,
@@ -132,12 +125,14 @@ pub struct Deposit<'info> {
 
 #[derive(Accounts)]
 pub struct Withdraw<'info> {
+    /// CHECK: Bank 是一个空的 PDA，由 System Program 拥有，仅用于存储 SOL
     #[account(
         mut,
         seeds = [b"bank"],
         bump
     )]
-    pub bank: Account<'info, Bank>,
+    pub bank: AccountInfo<'info>,
+
     #[account(
         mut,
         seeds = [b"user", receiver.key().as_ref()],
@@ -147,11 +142,6 @@ pub struct Withdraw<'info> {
     #[account(mut)]
     pub receiver: Signer<'info>,
     pub system_program: Program<'info, System>,
-}
-
-#[account]
-pub struct Bank {
-    pub authority: Pubkey,  // 未使用， 预留
 }
 
 #[account]

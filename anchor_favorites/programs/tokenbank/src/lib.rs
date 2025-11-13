@@ -116,7 +116,9 @@ pub struct Deposit<'info> {
         bump
     )]
     pub user_account: Account<'info, UserAccount>,
+    
     pub mint: Account<'info, Mint>,
+    
     #[account(
         mut,
         token::mint = mint,

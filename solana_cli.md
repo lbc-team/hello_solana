@@ -107,3 +107,9 @@ spl-token balance <mint account>
 spl-token supply  <mint account> ：
 spl-token account-info  <mint account> ： 查看 Token mint 的账户信息
 spl-token authorize <mint account> mint —disable:  关闭 mint 权限  
+
+spl-token transfer <mint account>  <TOKEN_AMOUNT> <RECIPIENT_WALLET_ADDRESS or RECIPIENT_TOKEN_ACCOUNT_ADDRESS>
+
+## Token2022
+
+spl-token initialize-metadata  OPEN_SPACE_S8 OP8 https://raw.githubusercontent.com/lbc-team/hello_gill/refs/heads/main/metadata/nft-metadata.json
