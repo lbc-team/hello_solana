@@ -3,7 +3,7 @@ use anchor_spl::{
     token::{self, Mint, Token, TokenAccount, Transfer},
 };
 
-declare_id!("DScDzC7XWcpLGyq2CMu8sPLfqE4Z1MDUqQRvieEYHZBa");
+declare_id!("Fgsiva1LWG6DaAWAx6tughzWhes3tFkYiAUHS5VQfCZH");
 
 #[program]
 pub mod tokenbank {
@@ -21,7 +21,7 @@ pub mod tokenbank {
 
     pub fn deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
         let transfer_ctx = CpiContext::new(
-            ctx.accounts.token_program.to_account_info(),
+            Token::id(),
             Transfer {
                 from: ctx.accounts.depositor_ata.to_account_info(),
                 to: ctx.accounts.tokenbank_ata.to_account_info(),
@@ -46,7 +46,7 @@ pub mod tokenbank {
         let signer = &[&bank_seeds[..]];
 
         let transfer_ctx = CpiContext::new_with_signer(
-            ctx.accounts.token_program.to_account_info(),
+            Token::id(),
             Transfer {
                 from: ctx.accounts.tokenbank_ata.to_account_info(),
                 to: ctx.accounts.receiver_ata.to_account_info(),
@@ -126,6 +126,8 @@ pub struct Deposit<'info> {
     )]
     pub depositor_ata: Account<'info, TokenAccount>,
 
+    // authority is bank, 这样程序可以通过 PDA seeds 签名来授权代币转移
+    
     #[account(
         mut,
         token::mint = mint,

@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-declare_id!("AfWzQDmP7gzMaiFPmwwQysvVTEuxPvKtDcUA5hfTwiwW");
+declare_id!("5AW6PAZ89DAt53CvW7iinQFKHjW5DZymrgn4uNY7GV1E");
 
 pub const ANCHOR_DISCRIMINATOR_SIZE: usize = 8;
 

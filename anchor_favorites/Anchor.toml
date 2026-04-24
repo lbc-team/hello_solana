@@ -1,17 +1,16 @@
 [toolchain]
-anchor_version = "0.31.1"
+anchor_version = "1.0.1"
 
 [features]
 resolution = true
 skip-lint = false
 
 [programs.localnet]
-anchor_favorites = "AfWzQDmP7gzMaiFPmwwQysvVTEuxPvKtDcUA5hfTwiwW"
-bank = "3A7uokk2LFPCMBJmCrn4ahErYicSpvktHEZnCmhVKY4m"
-emit_log = "GmLHkec7uKSM1ahLZvR7aiUvyzXxVTb8gZbaqdHj3kSH"
-tokenbank = "DScDzC7XWcpLGyq2CMu8sPLfqE4Z1MDUqQRvieEYHZBa"
+anchor_favorites = "5AW6PAZ89DAt53CvW7iinQFKHjW5DZymrgn4uNY7GV1E"
+bank = "3d6TUS2v5bmZ9489ii1dsasfPossE2zUGhaWjr2gFBKW"
+emit_log = "D5UcofgRSWCoGJh1ckmPpgUn6mBjRtSvY2kDyBX7vxCb"
+tokenbank = "Fgsiva1LWG6DaAWAx6tughzWhes3tFkYiAUHS5VQfCZH"
 
-# IDL 注册
 [registry]
 url = "https://api.apr.dev"
 

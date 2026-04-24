@@ -20,6 +20,6 @@ custom-panic = []
 anchor-debug = []
 
 [dependencies]
-anchor-lang = { version = "0.31.1", features = ["init-if-needed"] }
+anchor-lang = { version = "1.0.1", features = ["init-if-needed"] }
 
 [dev-dependencies]

@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_lang::system_program;
 
-declare_id!("3A7uokk2LFPCMBJmCrn4ahErYicSpvktHEZnCmhVKY4m");
+declare_id!("3d6TUS2v5bmZ9489ii1dsasfPossE2zUGhaWjr2gFBKW");
 
 // Bank 是一个空的 PDA（由 System Program 拥有），仅用于存储 SOL
 // 使用 system_program::transfer 进行存取款操作
@@ -25,7 +25,7 @@ pub mod bank {
         // - Data: []
         system_program::transfer(
             CpiContext::new(
-                ctx.accounts.system_program.to_account_info(),
+                system_program::ID,
                 system_program::Transfer {
                     from: ctx.accounts.depositor.to_account_info(),
                     to: ctx.accounts.bank.to_account_info(),
@@ -63,7 +63,7 @@ pub mod bank {
 
         system_program::transfer(
             CpiContext::new_with_signer(
-                ctx.accounts.system_program.to_account_info(),
+                system_program::ID,
                 system_program::Transfer {
                     from: ctx.accounts.bank.to_account_info(),
                     to: ctx.accounts.receiver.to_account_info(),
@@ -108,7 +108,7 @@ pub struct Deposit<'info> {
         seeds = [b"bank"],
         bump
     )]
-    pub bank: AccountInfo<'info>,
+    pub bank: UncheckedAccount<'info>,
 
     #[account(
         mut,
@@ -131,7 +131,7 @@ pub struct Withdraw<'info> {
         seeds = [b"bank"],
         bump
     )]
-    pub bank: AccountInfo<'info>,
+    pub bank: UncheckedAccount<'info>,
 
     #[account(
         mut,
@@ -156,4 +156,3 @@ pub enum BankError {
     #[msg("银行资金不足")]
     InsufficientBankFunds,
 }
-

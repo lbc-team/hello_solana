@@ -5,7 +5,7 @@
     "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check"
   },
   "dependencies": {
-    "@coral-xyz/anchor": "^0.31.1",
+    "@anchor-lang/core": "^1.0.1",
     "@solana/spl-token": "^0.4.13",
     "@solana/web3.js": "^1.98.2"
   },
@@ -18,5 +18,6 @@
     "prettier": "^2.6.2",
     "ts-mocha": "^10.0.0",
     "typescript": "^4.3.5"
-  }
+  },
+  "packageManager": "pnpm@10.32.1+sha512.a706938f0e89ac1456b6563eab4edf1d1faf3368d1191fc5c59790e96dc918e4456ab2e67d613de1043d2e8c81f87303e6b40d4ffeca9df15ef1ad567348f2be"
 }

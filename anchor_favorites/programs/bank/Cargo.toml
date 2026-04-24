@@ -20,5 +20,4 @@ custom-panic = []
 anchor-debug = []
 
 [dependencies]
-anchor-lang = "0.31.1"
-
+anchor-lang = "1.0.1"

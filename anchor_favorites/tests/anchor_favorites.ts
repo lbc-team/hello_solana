@@ -1,30 +1,30 @@
-import * as anchor from "@coral-xyz/anchor";
-import { Program } from "@coral-xyz/anchor";
+import * as anchor from "@anchor-lang/core";
+import { Program } from "@anchor-lang/core";
 import { Favorites } from "../target/types/favorites";
-import { BN } from "@coral-xyz/anchor";
+import { BN } from "@anchor-lang/core";
 import { expect } from "chai";
 
 async function generateUserAndAirdropSol() {
 
-      // 创建用户 keypair（需要作为 signer）
-      const user = anchor.web3.Keypair.generate();
-    
-      // 给用户账户空投 SOL
-      const connection = anchor.getProvider().connection;
-      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
-      
-      const airdropSignature = await connection.requestAirdrop(
-        user.publicKey,
-        2 * anchor.web3.LAMPORTS_PER_SOL // 空投 2 SOL
-      );
-      
-      await connection.confirmTransaction({
-        signature: airdropSignature,
-        blockhash,
-        lastValidBlockHeight,
-      });
+  // 创建用户 keypair（需要作为 signer）
+  const user = anchor.web3.Keypair.generate();
 
-      return user;
+  // 给用户账户空投 SOL
+  const connection = anchor.getProvider().connection;
+  const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+
+  const airdropSignature = await connection.requestAirdrop(
+    user.publicKey,
+    2 * anchor.web3.LAMPORTS_PER_SOL // 空投 2 SOL
+  );
+
+  await connection.confirmTransaction({
+    signature: airdropSignature,
+    blockhash,
+    lastValidBlockHeight,
+  });
+
+  return user;
 }
 
 describe("anchor_favorites", () => {
@@ -35,14 +35,14 @@ describe("anchor_favorites", () => {
   it("favorites!", async () => {
     // 随机生成用户并空投 SOL
     // const user = await generateUserAndAirdropSol();
-    
+
     // 使用 Anchor.toml 中配置的钱包
     const provider = anchor.getProvider();
     const user = (provider.wallet as anchor.Wallet).payer;
-    
+
     // 计算 PDA（根据 lib.rs 中的 seeds）
     const [favoritesPda] = anchor.web3.PublicKey.findProgramAddressSync(
-      [Buffer.from("favorites"), 
+      [Buffer.from("favorites"),
       user.publicKey.toBuffer()],
       program.programId
     );
@@ -57,9 +57,9 @@ describe("anchor_favorites", () => {
       })
       .signers([user])  // 添加 user 作为 signer
       .rpc();
-      
+
     console.log("Your transaction signature", tx);
-    
+
     // 调用 program.account.specificAccountType.fetch 获取某个账户数据
     // 如果获取所有账户数据，则使用 program.account.specificAccountType.all 方法
     const favoritesAccount = await program.account.favorites.fetch(favoritesPda);

@@ -1,10 +1,10 @@
-import * as anchor from "@coral-xyz/anchor";
-import { Program } from "@coral-xyz/anchor";
+import * as anchor from "@anchor-lang/core";
+import { Program } from "@anchor-lang/core";
 import { Bank } from "../target/types/bank";
 import { PublicKey, Keypair, Transaction } from "@solana/web3.js";
 import { assert } from "chai";
 
-describe.only("bank", () => {
+describe("bank", () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
 
@@ -138,7 +138,7 @@ describe.only("bank", () => {
   it("在一个交易中创建用户账户并存款", async () => {
     // 创建一个新的用户密钥对
     const newUser = Keypair.generate();
-    
+
     // 为新用户空投一些 SOL
     const airdropSig = await provider.connection.requestAirdrop(
       newUser.publicKey,
@@ -181,7 +181,7 @@ describe.only("bank", () => {
     // 创建并发送包含两个指令的交易
     const tx = new Transaction().add(createUserIx).add(depositIx);
     const initialBalance = await provider.connection.getBalance(bankPDA);
-    
+
     await provider.sendAndConfirm(tx, [newUser]);
 
     // 验证结果
