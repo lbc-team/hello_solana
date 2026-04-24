@@ -2,7 +2,7 @@ import {
   Connection,
   PublicKey,
 } from "@solana/web3.js";
-import { Program, AnchorProvider, setProvider } from "@coral-xyz/anchor";
+import { Program, AnchorProvider, setProvider } from "@anchor-lang/core";
 import idl from "./idl/favorites.json";
 import { PROGRAM_ID, RPC_ENDPOINT } from "./config";
 import { Favorites } from "./types/favorites";

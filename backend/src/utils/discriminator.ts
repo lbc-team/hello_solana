@@ -5,7 +5,7 @@
  * 用于区分不同的指令和账户类型
  */
 
-import { BorshInstructionCoder, BorshAccountsCoder } from "@coral-xyz/anchor";
+import { BorshInstructionCoder, BorshAccountsCoder } from "@anchor-lang/core";
 
 /**
  * 方式 1: 从 IDL JSON 中获取指令的 discriminator

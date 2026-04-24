@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useConnection, useAnchorWallet } from '@solana/wallet-adapter-react'
-import { AnchorProvider, Program } from '@coral-xyz/anchor'
+import { AnchorProvider, Program } from '@anchor-lang/core'
 import { FAVORITES_IDL, type Favorites } from './favorites'
 
 /**

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useConnection, useWallet, useAnchorWallet } from '@solana/wallet-adapter-react'
 import { PublicKey, SystemProgram } from '@solana/web3.js'
-import { BN } from '@coral-xyz/anchor'
+import { BN } from '@anchor-lang/core'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'

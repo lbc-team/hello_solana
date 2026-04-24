@@ -7,7 +7,7 @@ import {
   ComputeBudgetProgram,
   PublicKey,
 } from "@solana/web3.js";
-import { Program, BN, AnchorProvider, setProvider } from "@coral-xyz/anchor";
+import { Program, BN, AnchorProvider, setProvider } from "@anchor-lang/core";
 import idl from "./idl/favorites.json";
 import { PROGRAM_ID, RPC_ENDPOINT, PAYER_KEYPAIR_PATH } from "./config";
 import { Favorites } from "./types/favorites";

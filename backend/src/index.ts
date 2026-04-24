@@ -5,7 +5,7 @@ import {
   SystemProgram,
   PublicKey,
 } from "@solana/web3.js";
-import { Program, BN, AnchorProvider } from "@coral-xyz/anchor";
+import { Program, BN, AnchorProvider } from "@anchor-lang/core";
 import idl from "./idl/favorites.json";
 import { RPC_ENDPOINT, PAYER_KEYPAIR_PATH } from "./config";
 import { Favorites } from "./types/favorites";
@@ -16,8 +16,8 @@ async function main() {
   const connection = new Connection(RPC_ENDPOINT, "confirmed");
 
   // 生成钱包
-  // const payer = Keypair.generate();
-  const payer = Keypair.fromSecretKey(Buffer.from(JSON.parse(fs.readFileSync(PAYER_KEYPAIR_PATH, "utf8"))));
+  const payer = Keypair.generate();
+  // const payer = Keypair.fromSecretKey(Buffer.from(JSON.parse(fs.readFileSync(PAYER_KEYPAIR_PATH, "utf8"))));
 
   // 从 Keypair 创建 AnchorWallet 
   const createAnchorWallet = (keypair: Keypair) => ({
@@ -52,7 +52,7 @@ async function main() {
     // Airdrop 一些 SOL 以便支付手续费
     const airdropSignature = await connection.requestAirdrop(
       payer.publicKey,
-      10 *LAMPORTS_PER_SOL,
+      10 * LAMPORTS_PER_SOL,
     );
     await connection.confirmTransaction({
       signature: airdropSignature,
@@ -98,10 +98,10 @@ async function main() {
   // 获取所有 PDA 账户 (使用未解析版本以获得原始数据)
   const allAccounts = await connection.getProgramAccounts(program.programId);
   console.log("All Accounts:", allAccounts.length);
-  
+
   for (const account of allAccounts) {
     console.log("Account:", account.pubkey.toBase58());
-    
+
     // 🔍 解析 Favorites 账户数据
     try {
       // 检查数据类型，只处理 Buffer 类型的数据
@@ -111,7 +111,7 @@ async function main() {
         console.log("📊 解析的账户数据:");
         console.log(`  Number: ${decodedData.number.toString()}`);
         console.log(`  Color: ${decodedData.color}`);
-      }  
+      }
     } catch (error) {
       console.log("❌ 解析账户数据失败:", error);
     }
@@ -119,7 +119,7 @@ async function main() {
 
   // 🔍 获取程序相关的交易签名 - 优化参数
   console.log("\n📋 获取交易历史...");
-  
+
   // 本地节点数据会丢失
   const userSignatures = await connection.getSignaturesForAddress(payer.publicKey);
   console.log(`用户账户交易数: ${userSignatures.length}`);
@@ -131,7 +131,7 @@ async function main() {
       console.log(`  签名: ${sig.signature}`);
       console.log(`  状态: ${sig.err ? '失败' : '成功'}`);
       console.log(`  Slot: ${sig.slot}`);
-      
+
       // 获取交易详情
       const txDetail = await connection.getParsedTransaction(sig.signature);
       console.log("Transaction Info:", txDetail?.meta?.logMessages);

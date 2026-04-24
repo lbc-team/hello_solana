@@ -5,7 +5,7 @@ import {
   SystemProgram,
   PublicKey,
 } from "@solana/web3.js";
-import { Program, BN, AnchorProvider } from "@coral-xyz/anchor";
+import { Program, BN, AnchorProvider } from "@anchor-lang/core";
 import bankIdl from "./idl/bank.json";
 import { RPC_ENDPOINT, PAYER_KEYPAIR_PATH } from "./config";
 import { Bank } from "./types/bank";

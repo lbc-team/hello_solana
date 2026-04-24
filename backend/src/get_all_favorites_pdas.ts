@@ -6,7 +6,7 @@
  */
 
 import { Connection, PublicKey } from "@solana/web3.js";
-import { BorshCoder } from "@coral-xyz/anchor";
+import { BorshCoder } from "@anchor-lang/core";
 import favoritesIdl from "./idl/favorites.json";
 import { Favorites } from "./types/favorites";
 

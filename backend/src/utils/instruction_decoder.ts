@@ -4,7 +4,7 @@
  * 使用 Anchor 的 BorshInstructionCoder 自动解码指令数据
  */
 
-import { BorshInstructionCoder } from "@coral-xyz/anchor";
+import { BorshInstructionCoder } from "@anchor-lang/core";
 import bs58 from "bs58";
 
 /**
