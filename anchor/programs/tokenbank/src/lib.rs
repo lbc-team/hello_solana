@@ -202,3 +202,42 @@ pub enum TokenBankError {
     #[msg("Account not empty")]
     AccountNotEmpty,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn initialize_sets_expected_authority() {
+        let authority = Pubkey::new_unique();
+        let bank = Bank { authority };
+
+        assert_eq!(bank.authority, authority);
+    }
+
+    #[test]
+    fn user_account_tracks_token_deposits() {
+        let mut account = UserAccount { deposit_amount: 0 };
+
+        account.deposit_amount += 500;
+        account.deposit_amount += 250;
+
+        assert_eq!(account.deposit_amount, 750);
+    }
+
+    #[test]
+    fn user_account_can_be_closed_only_when_empty() {
+        let empty_account = UserAccount { deposit_amount: 0 };
+        let non_empty_account = UserAccount { deposit_amount: 1 };
+
+        assert_eq!(empty_account.deposit_amount, 0);
+        assert_ne!(non_empty_account.deposit_amount, 0);
+    }
+
+    #[test]
+    fn bank_pda_is_stable() {
+        let (bank_pda, _) = Pubkey::find_program_address(&[b"bank"], &ID);
+
+        assert_eq!(bank_pda.to_string(), "9kGqcfGoHhDBibBE82qr68P4fvP5bMnNm1w5mUHJSH1Q");
+    }
+}

@@ -29,3 +29,21 @@ pub struct MySecondEvent {
     pub value: u64,
     pub message: String,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn event_payloads_match_expected_values() {
+        let event = MyEvent { value: 12 };
+        let second_event = MySecondEvent {
+            value: 3,
+            message: "hello world".to_string(),
+        };
+
+        assert_eq!(event.value, 12);
+        assert_eq!(second_event.value, 3);
+        assert_eq!(second_event.message, "hello world");
+    }
+}

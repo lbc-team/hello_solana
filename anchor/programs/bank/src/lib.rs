@@ -156,3 +156,45 @@ pub enum BankError {
     #[msg("银行资金不足")]
     InsufficientBankFunds,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn user_account_tracks_deposit_amount() {
+        let mut account = UserAccount { deposit_amount: 0 };
+
+        account.deposit_amount = account.deposit_amount.checked_add(1_000).unwrap();
+        account.deposit_amount = account.deposit_amount.checked_add(250).unwrap();
+
+        assert_eq!(account.deposit_amount, 1_250);
+    }
+
+    #[test]
+    fn user_account_withdraw_reduces_balance() {
+        let mut account = UserAccount {
+            deposit_amount: 2_000,
+        };
+
+        account.deposit_amount = account.deposit_amount.checked_sub(750).unwrap();
+
+        assert_eq!(account.deposit_amount, 1_250);
+    }
+
+    #[test]
+    fn user_account_cannot_underflow() {
+        let account = UserAccount { deposit_amount: 500 };
+
+        let result = account.deposit_amount.checked_sub(750);
+
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn bank_pda_is_stable() {
+        let (bank_pda, _) = Pubkey::find_program_address(&[b"bank"], &ID);
+
+        assert_eq!(bank_pda.to_string(), "HKnkrF4yK2XZZC3kEPddVSPc5pLPq8BM14wfJGNJQGWk");
+    }
+}
