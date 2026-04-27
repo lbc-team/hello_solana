@@ -19,4 +19,4 @@ cluster = "localnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
-test = "pnpx ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+test = "pnpx ts-mocha -p ./tsconfig.json -t 1000000 --require ./test-support/surfpool_setup.js tests/**/*.ts"
