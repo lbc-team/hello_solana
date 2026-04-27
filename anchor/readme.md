@@ -19,10 +19,10 @@ nightly-x86_64-apple-darwin
 solana
 
 > solana --version
-solana-cli 2.2.17 (src:2b7a363d; feat:3073396398, client:Agave)
+solana-cli 3.1.13 (src:437252fc; feat:534737035, client:Agave)
 
 > anchor --version
-anchor-cli 0.31.1
+anchor-cli 1.0.1
 
 ```
 
@@ -43,6 +43,7 @@ anchor init <project name>
 
 ```
 > anchor test
+> anchor test --validator legacy      # 强制使用 solana-test-validator
 > anchor test --skip-local-validator  # 不启动 solana-test-validator
 > anchor test --skip-build   # 使用之前的构建
 > anchor test --skip-deploy  # 使用之前的部署 
@@ -51,4 +52,11 @@ anchor init <project name>
 
 运行 `Anchor.toml` 中定义在 `scripts` 下的 test 脚本。
 
+注意：`anchor-cli 1.0.1` 默认使用 `surfpool` 作为本地测试 validator。
+如果工程测试依赖 `requestAirdrop`、`getLatestBlockhash` 等常规本地 RPC，建议在 `Anchor.toml` 中设置：
+
+```toml
+[test]
+validator = "legacy"
+```
 

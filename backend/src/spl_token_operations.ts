@@ -39,19 +39,19 @@ async function main() {
   console.log("✅ 连接到 Solana:", RPC_ENDPOINT);
 
   // 2. 加载支付者密钥对
-  // const payer = Keypair.generate();
-  const payer = loadKeypair(PAYER_KEYPAIR_PATH);
-  console.log("✅ 支付者地址:", payer.publicKey.toBase58());
+  // const walletKeyPair = Keypair.generate();
+  const walletKeyPair = loadKeypair(PAYER_KEYPAIR_PATH);
+  console.log("✅ 支付者地址:", walletKeyPair.publicKey.toBase58());
 
   // 检查余额
-  const balance = await connection.getBalance(payer.publicKey);
+  const balance = await connection.getBalance(walletKeyPair.publicKey);
   console.log(`💰 支付者余额: ${balance / 1e9} SOL\n`);
 
   if (balance < 0.01 * 1e9) {
     console.log("❌ 余额不足，请先充值 SOL");
     // Airdrop 一些 SOL 以便支付手续费
     const airdropSignature = await connection.requestAirdrop(
-      payer.publicKey,
+      walletKeyPair.publicKey,
       10 *LAMPORTS_PER_SOL,
     );
     await connection.confirmTransaction({
@@ -66,9 +66,9 @@ async function main() {
   console.log("📝 正在创建新的 Token Mint...");
   const mint = await createMint(
     connection,
-    payer,             // 支付交易费用的账户
-    payer.publicKey,   // Mint Authority（铸币权限）
-    payer.publicKey,   // Freeze Authority（冻结权限），可设为 null
+    walletKeyPair,             // 支付交易费用的账户
+    walletKeyPair.publicKey,   // Mint Authority（铸币权限）
+    walletKeyPair.publicKey,                      // Freeze Authority（冻结权限），可设为 null
     9                  // 小数位数 (decimals)
   );
   console.log("✅ Token Mint 地址:", mint.toBase58());
@@ -77,9 +77,9 @@ async function main() {
   console.log("📝 正在为支付者创建 Token Account...");
   const payerTokenAccount = await getOrCreateAssociatedTokenAccount(
     connection,
-    payer,
+    walletKeyPair,
     mint,
-    payer.publicKey
+    walletKeyPair.publicKey
   );
   console.log("✅ 支付者 Token Account:", payerTokenAccount.address.toBase58());
   console.log(`   当前余额: ${payerTokenAccount.amount}\n`);
@@ -89,10 +89,10 @@ async function main() {
   console.log(`📝 正在铸造 ${mintAmount / 1e9} 个 Token...`);
   const mintSignature = await mintTo(
     connection,
-    payer,
+    walletKeyPair,
     mint,
     payerTokenAccount.address,
-    payer.publicKey,  // Mint Authority
+    walletKeyPair.publicKey,  // Mint Authority
     mintAmount
   );
   console.log("✅ 铸造成功！");
@@ -120,7 +120,7 @@ async function main() {
   console.log("📝 为接收者创建 Token Account...");
   const receiverTokenAccount = await getOrCreateAssociatedTokenAccount(
     connection,
-    payer,
+    walletKeyPair,
     mint,
     receiver.publicKey
   );
@@ -132,10 +132,10 @@ async function main() {
   console.log(`📝 正在转账 ${transferAmount / 1e9} 个 Token...`);
   const transferSignature = await transfer(
     connection,
-    payer,
+    walletKeyPair,
     payerTokenAccount.address,
     receiverTokenAccount.address,
-    payer.publicKey,
+    walletKeyPair.publicKey,
     transferAmount
   );
   console.log("✅ 转账成功！");

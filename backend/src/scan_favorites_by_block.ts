@@ -11,7 +11,7 @@ import { Favorites } from "./types/favorites";
 import { decodeInstruction } from "./utils/instruction_decoder";
 
 // Favorites 合约程序 ID
-const FAVORITES_PROGRAM_ID = new PublicKey("AfWzQDmP7gzMaiFPmwwQysvVTEuxPvKtDcUA5hfTwiwW");
+const FAVORITES_PROGRAM_ID = new PublicKey("5AW6PAZ89DAt53CvW7iinQFKHjW5DZymrgn4uNY7GV1E");
 const RPC_ENDPOINT = "http://localhost:8899";
 
 // 扫描间隔（毫秒）

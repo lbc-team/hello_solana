@@ -1,5 +1,5 @@
 {
-  "address": "DScDzC7XWcpLGyq2CMu8sPLfqE4Z1MDUqQRvieEYHZBa",
+  "address": "Fgsiva1LWG6DaAWAx6tughzWhes3tFkYiAUHS5VQfCZH",
   "metadata": {
     "name": "tokenbank",
     "version": "0.1.0",
@@ -110,7 +110,20 @@
       "accounts": [
         {
           "name": "bank",
-          "writable": true
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  97,
+                  110,
+                  107
+                ]
+              }
+            ]
+          }
         },
         {
           "name": "user_account",

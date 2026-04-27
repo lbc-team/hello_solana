@@ -1,5 +1,5 @@
 {
-  "address": "3A7uokk2LFPCMBJmCrn4ahErYicSpvktHEZnCmhVKY4m",
+  "address": "3d6TUS2v5bmZ9489ii1dsasfPossE2zUGhaWjr2gFBKW",
   "metadata": {
     "name": "bank",
     "version": "0.1.0",
@@ -122,48 +122,6 @@
       ]
     },
     {
-      "name": "initialize",
-      "discriminator": [
-        175,
-        175,
-        109,
-        31,
-        13,
-        152,
-        155,
-        237
-      ],
-      "accounts": [
-        {
-          "name": "bank",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  98,
-                  97,
-                  110,
-                  107
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "authority",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": []
-    },
-    {
       "name": "withdraw",
       "discriminator": [
         183,
@@ -234,19 +192,6 @@
   ],
   "accounts": [
     {
-      "name": "Bank",
-      "discriminator": [
-        142,
-        49,
-        166,
-        242,
-        50,
-        66,
-        97,
-        188
-      ]
-    },
-    {
       "name": "UserAccount",
       "discriminator": [
         211,
@@ -273,18 +218,6 @@
     }
   ],
   "types": [
-    {
-      "name": "Bank",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "authority",
-            "type": "pubkey"
-          }
-        ]
-      }
-    },
     {
       "name": "UserAccount",
       "type": {
